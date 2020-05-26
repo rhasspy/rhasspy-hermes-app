@@ -20,9 +20,7 @@ class TimeApp(HermesClient):
     def __init__(self, mqtt_client, site_ids: typing.Optional[typing.List[str]] = None):
         super().__init__("TimeApp", mqtt_client, site_ids=site_ids)
 
-        self.subscribe_topics(
-            NluIntent.topic(intent_name="GetTime"),
-        )
+        self.subscribe_topics(NluIntent.topic(intent_name="GetTime"),)
 
     async def on_raw_message(self, topic: str, payload: bytes):
         """Received message from MQTT broker."""
@@ -33,9 +31,13 @@ class TimeApp(HermesClient):
                 nlu_intent = NluIntent.from_json(payload)
                 if nlu_intent.intent.intent_name == "GetTime":
                     now = datetime.now().strftime("%H %M")
-                    self.publish(DialogueEndSession(
-                        session_id=nlu_intent.session_id, site_id=nlu_intent.site_id, text=f"It's {now}"
-                    ))
+                    self.publish(
+                        DialogueEndSession(
+                            session_id=nlu_intent.session_id,
+                            site_id=nlu_intent.site_id,
+                            text=f"It's {now}",
+                        )
+                    )
             else:
                 _LOGGER.warning("Unexpected message: %s", message)
 

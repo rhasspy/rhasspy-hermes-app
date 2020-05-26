@@ -2,7 +2,7 @@
 
 [![Continous Integration](https://github.com/rhasspy/rhasspy-hermes-app/workflows/Tests/badge.svg)](https://github.com/rhasspy/rhasspy-hermes-app/actions)
 [![PyPI package version](https://img.shields.io/pypi/v/rhasspy-hermes-app.svg)](https://pypi.org/project/rhasspy-hermes-app)
-[![Python versions](https://img.shields.io/pypi/pyversions/rhasspy-hermes.svg)](https://www.python.org)
+[![Python versions](https://img.shields.io/pypi/pyversions/rhasspy-hermes-app.svg)](https://www.python.org)
 [![GitHub license](https://img.shields.io/github/license/rhasspy/rhasspy-hermes-app.svg)](https://github.com/rhasspy/rhasspy-hermes-app/blob/master/LICENSE)
 
 Helper library to create voice apps for [Rhasspy](https://rhasspy.readthedocs.io/) in Python using the [Hermes protocol](https://docs.snips.ai/reference/hermes).
@@ -53,11 +53,10 @@ python3 time_app.py --help
 
 ## TODO list
 
-* Add `ContinueSession` support.
 * Add decorators to react to other Hermes messages.
-* Improve mypy coverage.
-* Write tests.
-* Write Documentation.
+* Improve `mypy` coverage.
+* Write `pytest` tests.
+* Write documentation.
 * Release an installable Python package on PyPI when the API has been stabilised.
 * Let the app load its intents/slots/… from a file and re-train Rhasspy on installation/startup of the app.
 * Make multi-language apps possible, so the app developer can define example sentences in multiple languages and the app uses the language from your Rhasspy setup's profile.

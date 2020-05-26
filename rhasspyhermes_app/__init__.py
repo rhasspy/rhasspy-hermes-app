@@ -8,14 +8,14 @@ from dataclasses import dataclass
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes.client import HermesClient
-from rhasspyhermes.dialogue import DialogueEndSession
+from rhasspyhermes.dialogue import DialogueContinueSession, DialogueEndSession
 from rhasspyhermes.nlu import NluIntent
 
 _LOGGER = logging.getLogger("HermesApp")
 
 
 class HermesApp(HermesClient):
-    """Tell the time."""
+    """A Rhasspy app using the Hermes protocol."""
 
     def __init__(self, name: str):
         """Initialize the Rhasspy Hermes app."""
@@ -77,6 +77,18 @@ class HermesApp(HermesClient):
                             custom_data=message.custom_data,
                         )
                     )
+                elif isinstance(message, self.ContinueSession):
+                    self.publish(
+                        DialogueContinueSession(
+                            session_id=intent.session_id,
+                            site_id=intent.site_id,
+                            text=message.text,
+                            intent_filter=message.intent_filter,
+                            custom_data=message.custom_data,
+                            send_intent_not_recognized=message.send_intent_not_recognized,
+                            slot=message.slot,
+                        )
+                    )
 
             try:
                 self._callbacks_intent[intent_name].append(wrapped)
@@ -104,6 +116,35 @@ class HermesApp(HermesClient):
             pass
         finally:
             self.mqtt_client.loop_stop()
+
+    @dataclass
+    class ContinueSession:
+        """Helper class to continue the current session.
+
+        Attributes
+        ----------
+
+        text: Optional[str] = None
+            The text the TTS should say to start this additional request of the
+            session.
+        intent_filter: Optional[List[str]] = None
+            A list of intents names to restrict the NLU resolution on the answer of
+            this query.
+        custom_data: Optional[str] = None
+            An update to the session's custom data. If not provided, the custom data
+            will stay the same.
+        send_intent_not_recognized: bool = False
+            Indicates whether the dialogue manager should handle non recognized
+            intents by itself or send them for the client to handle.
+        slot: typing.Optional[str] = None
+            Unused
+        """
+
+        custom_data: typing.Optional[str] = None
+        text: typing.Optional[str] = None
+        intent_filter: typing.Optional[typing.List[str]] = None
+        send_intent_not_recognized: bool = False
+        slot: typing.Optional[str] = None
 
     @dataclass
     class EndSession:
