@@ -51,6 +51,17 @@ Try the example app [time_app.py](time_app.py) with the `--help` flag to see wha
 python3 time_app.py --help
 ```
 
+## Installation
+
+You need Python 3.6 for Rhasspy Hermes App. For experimenting with and developing on the library, you should create a Python virtual environment with the `make venv` script (which also installs the dependencies) and activate it:
+
+```shell
+make venv
+source .venv/bin/activate
+```
+
+After this, you can run the demo app `time_ap.py` to try the library.
+
 ## TODO list
 
 * Add decorators to react to other Hermes messages.
