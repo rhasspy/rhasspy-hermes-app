@@ -2,8 +2,8 @@
 import argparse
 import asyncio
 import logging
-import typing
 from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
@@ -37,7 +37,14 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_intent = {}
+        self._callbacks_intent: Dict[
+            str,
+            List[
+                Callable[
+                    [NluIntent], Union[HermesApp.ContinueSession, HermesApp.EndSession]
+                ]
+            ],
+        ] = {}
 
     def _subscribe_callbacks(self):
         # Remove duplicate intent names
@@ -137,15 +144,15 @@ class HermesApp(HermesClient):
         send_intent_not_recognized: bool = False
             Indicates whether the dialogue manager should handle non recognized
             intents by itself or send them for the client to handle.
-        slot: typing.Optional[str] = None
+        slot: Optional[str] = None
             Unused
         """
 
-        custom_data: typing.Optional[str] = None
-        text: typing.Optional[str] = None
-        intent_filter: typing.Optional[typing.List[str]] = None
+        custom_data: Optional[str] = None
+        text: Optional[str] = None
+        intent_filter: Optional[List[str]] = None
         send_intent_not_recognized: bool = False
-        slot: typing.Optional[str] = None
+        slot: Optional[str] = None
 
     @dataclass
     class EndSession:
@@ -160,5 +167,5 @@ class HermesApp(HermesClient):
             will stay the same.
         """
 
-        text: typing.Optional[str] = None
-        custom_data: typing.Optional[str] = None
+        text: Optional[str] = None
+        custom_data: Optional[str] = None
