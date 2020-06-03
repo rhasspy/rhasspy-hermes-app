@@ -2,8 +2,9 @@
 import argparse
 import asyncio
 import logging
+import re
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union, Pattern
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
@@ -46,12 +47,26 @@ class HermesApp(HermesClient):
             ],
         ] = {}
 
+        self._callbacks_topic: Dict[
+            str,
+            List[
+                Callable[
+                    [str, bytes], ()
+                ]
+            ],
+        ] = {}
+
     def _subscribe_callbacks(self):
         # Remove duplicate intent names
         intent_names = list(set(self._callbacks_intent.keys()))
         topics = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
+
+        topic_names = list(set(self._callbacks_topic.keys()))
+        for topic_name in topic_names:
+            topics.append(topic_name)
+
         self.subscribe_topics(*topics)
 
     async def on_raw_message(self, topic: str, payload: bytes):
@@ -65,16 +80,24 @@ class HermesApp(HermesClient):
                     for function in self._callbacks_intent[intent_name]:
                         function(nlu_intent)
             else:
-                _LOGGER.warning("Unexpected topic: %s", topic)
+                unexpected_topic = True
+                for key, callback in self._callbacks_topic.items():
+                    for function in callback:
+                        if topic == key or (hasattr(function, 'topic_pattern') and re.match(getattr(function, 'topic_pattern'), topic) is not None):
+                            function(topic, payload)
+                            unexpected_topic = False
+
+                if unexpected_topic:
+                    _LOGGER.warning("Unexpected topic: %s", topic)
 
         except Exception:
             _LOGGER.exception("on_raw_message")
 
-    def on_intent(self, intent_name):
+    def on_intent(self, intent_name: str):
         """Decorator for intent methods."""
 
         def wrapper(function):
-            def wrapped(intent):
+            def wrapped(intent: NluIntent):
                 message = function(intent)
                 if isinstance(message, self.EndSession):
                     self.publish(
@@ -102,6 +125,25 @@ class HermesApp(HermesClient):
                 self._callbacks_intent[intent_name].append(wrapped)
             except KeyError:
                 self._callbacks_intent[intent_name] = [wrapped]
+
+            return wrapped
+
+        return wrapper
+
+    def on_topic(self, topic_name: str, pattern: Pattern = None):
+        """Decorator for raw topic methods."""
+
+        def wrapper(function):
+            def wrapped(topic: str, payload: bytes):
+                function(topic, payload)
+
+            try:
+                self._callbacks_topic[topic_name].append(wrapped)
+            except KeyError:
+                self._callbacks_topic[topic_name] = [wrapped]
+
+            if pattern is not None:
+                wrapped.topic_pattern = pattern
 
             return wrapped
 
