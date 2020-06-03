@@ -17,9 +17,10 @@ _LOGGER = logging.getLogger("HermesApp")
 class HermesApp(HermesClient):
     """A Rhasspy app using the Hermes protocol."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, parser: argparse.ArgumentParser = None):
         """Initialize the Rhasspy Hermes app."""
-        parser = argparse.ArgumentParser(prog=name)
+        if parser is None:
+            parser = argparse.ArgumentParser(prog=name)
         # Add default arguments
         hermes_cli.add_hermes_args(parser)
 
