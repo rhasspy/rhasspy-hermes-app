@@ -90,13 +90,13 @@ class HermesApp(HermesClient):
             else:
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
-                    for function in self._callbacks_topic[topic]:
-                        function(TopicData(topic, {}), payload)
+                    for function_1 in self._callbacks_topic[topic]:
+                        function_1(TopicData(topic, {}), payload)
                         unexpected_topic = False
                 else:
-                    for function in self._callbacks_topic_regex:
-                        if hasattr(function, 'topic_extras'):
-                            topic_extras = getattr(function, 'topic_extras')
+                    for function_2 in self._callbacks_topic_regex:
+                        if hasattr(function_2, 'topic_extras'):
+                            topic_extras = getattr(function_2, 'topic_extras')
                             for pattern, named_positions in topic_extras:
                                 if re.match(pattern, topic) is not None:
                                     data = TopicData(topic, {})
@@ -105,7 +105,7 @@ class HermesApp(HermesClient):
                                         for name, position in named_positions.items():
                                             data.data[name] = parts[position]
 
-                                    function(data, payload)
+                                    function_2(data, payload)
                                     unexpected_topic = False
 
                 if unexpected_topic:
