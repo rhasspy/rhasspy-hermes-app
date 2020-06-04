@@ -181,11 +181,11 @@ class HermesApp(HermesClient):
                     i, token = tuple(part)
                     value = token
                     if i == 0:
-                        value = '^[^+#/]' if '+' == token else '[^/]+' if length == 0 and '#' == token else '^' + token
+                        value = '^[^+#/]' if token == '+' else '[^/]+' if length == 0 and token == '#' else '^' + token
                     elif i < length:
-                        value = '[^/]+' if '+' == token else token
+                        value = '[^/]+' if token == '+' else token
                     elif i == length:
-                        value = '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
+                        value = '[^/]+' if token == '#' else '[^/]+$' if token == '+' else token + '$'
 
                     return value
 
@@ -276,5 +276,16 @@ class HermesApp(HermesClient):
 
 @dataclass
 class TopicData:
-    topic: str
-    data: Optional[Dict[str, str]] = None
+    """Helper class for topic subscription.
+
+        Attributes
+        ----------
+        topic: str
+            The topic
+        data: Optional[Dict[str, str]] = None
+            Holds extracted data for given placeholder
+    """
+
+
+topic: str
+data: Optional[Dict[str, str]] = None
