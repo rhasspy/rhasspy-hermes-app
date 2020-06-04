@@ -51,7 +51,7 @@ class HermesApp(HermesClient):
             str,
             List[
                 Callable[
-                    [str, bytes], ()
+                    [str, bytes], None
                 ]
             ],
         ] = {}
