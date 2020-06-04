@@ -64,8 +64,7 @@ class HermesApp(HermesClient):
         ]
 
         topic_names = list(set(self._callbacks_topic.keys()))
-        for topic_name in topic_names:
-            topics.append(topic_name)
+        topics.extend(topic_names)
 
         self.subscribe_topics(*topics)
 
