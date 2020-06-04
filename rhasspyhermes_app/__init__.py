@@ -286,4 +286,4 @@ class TopicData:
     """
 
     topic: str
-    data: Optional[Dict[str, str]] = None
+    data: Dict[str, str]
