@@ -83,7 +83,14 @@ class HermesApp(HermesClient):
                 for key, callback in self._callbacks_topic.items():
                     for function in callback:
                         if topic == key or (hasattr(function, 'topic_pattern') and re.match(getattr(function, 'topic_pattern'), topic) is not None):
-                            function(topic, payload)
+                            data = TopicData(topic, {})
+                            if hasattr(function, 'named_positions'):
+                                named_positions = getattr(function, 'named_positions')
+                                parts = topic.split(sep='/')
+                                for name, position in named_positions.items():
+                                    data.custom_data[name] = parts[position]
+
+                            function(data, payload)
                             unexpected_topic = False
 
                 if unexpected_topic:
@@ -129,20 +136,57 @@ class HermesApp(HermesClient):
 
         return wrapper
 
-    def on_topic(self, topic_name: str, pattern: Pattern = None):
+    def on_topic(self, topic_name: str):
         """Decorator for raw topic methods."""
 
         def wrapper(function):
-            def wrapped(topic: str, payload: bytes):
-                function(topic, payload)
+            def wrapped(data: TopicData, payload: bytes):
+                function(data, payload)
+
+            parts = topic_name.split(sep='/')
+            length = len(parts) - 1
+            replaced_topic_name = ''
+            has_placeholders = False
+            named_positions = {}
+            for i, part in enumerate(parts):
+                if part.startswith('{') and part.endswith('}'):
+                    replaced_topic_name += '+'
+                    named_positions[part[1:-1]] = i
+                    has_placeholders = True
+                else:
+                    replaced_topic_name += part
+
+                if i < length:
+                    replaced_topic_name += '/'
+
+            if not has_placeholders:
+                replaced_topic_name = topic_name
+            else:
+                wrapped.named_positions = named_positions
+
+            if '+' in replaced_topic_name or '#' in replaced_topic_name:
+                tokens = replaced_topic_name.split(sep='/')
+                pattern = ''
+                length = len(tokens) - 1
+                if length >= 0:
+                    for i, token in enumerate(tokens):
+                        if i == 0:
+                            pattern += '^\w+' if '+' == token or length == 0 and '#' == token else token
+                        elif i < length:
+                            pattern += '[^/]+' if '+' == token else token
+                        elif i == length:
+                            pattern += '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
+
+                        if i < length:
+                            pattern += '/'
+
+                    if len(pattern) > 0:
+                        wrapped.topic_pattern = re.compile(pattern)
 
             try:
-                self._callbacks_topic[topic_name].append(wrapped)
+                self._callbacks_topic[replaced_topic_name].append(wrapped)
             except KeyError:
-                self._callbacks_topic[topic_name] = [wrapped]
-
-            if pattern is not None:
-                wrapped.topic_pattern = pattern
+                self._callbacks_topic[replaced_topic_name] = [wrapped]
 
             return wrapped
 
@@ -210,3 +254,9 @@ class HermesApp(HermesClient):
 
         text: Optional[str] = None
         custom_data: Optional[str] = None
+
+
+@dataclass
+class TopicData:
+    topic: str
+    custom_data: Optional[Dict[str, str]] = None

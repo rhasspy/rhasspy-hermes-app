@@ -1,23 +1,30 @@
-import json
 import logging
-import re
 
-from rhasspyhermes_app import HermesApp
+from rhasspyhermes_app import HermesApp, TopicData
 
 _LOGGER = logging.getLogger("RawTopicApp")
 
 app = HermesApp("RawTopicApp")
 
 
-@app.on_topic("hermes/hotword/+/detected", re.compile(r"^hermes/hotword/([^/]+)/detected"))
-def test_topic(topic: str, payload: bytes):
-    content = json.loads(payload.decode('utf-8'))
-    _LOGGER.debug(f"topic: {topic}, model: {content['modelId']}")
+@app.on_topic("hermes/hotword/{hotword}/detected")
+def test_topic1(data: TopicData, payload: bytes):
+    _LOGGER.debug(f"topic1: {data.topic}, hotword: {data.custom_data.get('hotword')}, payload: {payload.decode('utf-8')}")
 
 
 @app.on_topic("hermes/dialogueManager/sessionStarted")
-def test_topic1(topic: str, payload: bytes):
-    _LOGGER.debug(f"topic: {topic}, payload: {payload.decode('utf-8')}")
+def test_topic2(data: TopicData, payload: bytes):
+    _LOGGER.debug(f"topic2: {data.topic}, payload: {payload.decode('utf-8')}")
+
+
+@app.on_topic("hermes/tts/+")
+def test_topic3(data: TopicData, payload: bytes):
+    _LOGGER.debug(f"topic3: {data.topic}, payload: {payload.decode('utf-8')}")
+
+
+@app.on_topic("hermes/+/{site_id}/playBytes/#")
+def test_topic4(data: TopicData, payload: bytes):
+    _LOGGER.debug(f"topic4: {data.topic}, site_id: {data.custom_data.get('site_id')}")
 
 
 app.run()
