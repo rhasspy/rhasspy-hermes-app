@@ -4,7 +4,7 @@ import asyncio
 import logging
 import re
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Union, Pattern
+from typing import Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
@@ -56,6 +56,14 @@ class HermesApp(HermesClient):
             ],
         ] = {}
 
+        self._callbacks_topic_regex: List[
+            Callable[
+                [str, bytes], None
+            ]
+        ] = []
+
+        self._additional_topic: List[str] = []
+
     def _subscribe_callbacks(self):
         # Remove duplicate intent names
         intent_names = list(set(self._callbacks_intent.keys()))
@@ -65,6 +73,7 @@ class HermesApp(HermesClient):
 
         topic_names = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
+        topics.extend(self._additional_topic)
 
         self.subscribe_topics(*topics)
 
@@ -80,18 +89,25 @@ class HermesApp(HermesClient):
                         function(nlu_intent)
             else:
                 unexpected_topic = True
-                for key, callback in self._callbacks_topic.items():
-                    for function in callback:
-                        if topic == key or (hasattr(function, 'topic_pattern') and re.match(getattr(function, 'topic_pattern'), topic) is not None):
-                            data = TopicData(topic, {})
-                            if hasattr(function, 'named_positions'):
-                                named_positions = getattr(function, 'named_positions')
-                                parts = topic.split(sep='/')
-                                for name, position in named_positions.items():
-                                    data.custom_data[name] = parts[position]
+                if topic in self._callbacks_topic:
+                    for function in self._callbacks_topic[topic]:
+                        function(TopicData(topic, {}), payload)
+                        unexpected_topic = False
+                else:
+                    for function in self._callbacks_topic_regex:
+                        # for function in callback:
+                        if hasattr(function, 'topic_extras'):
+                            topic_extras = getattr(function, 'topic_extras')
+                            for pattern, named_positions in topic_extras:
+                                if re.match(pattern, topic) is not None:
+                                    data = TopicData(topic, {})
+                                    parts = topic.split(sep='/')
+                                    if named_positions is not None:
+                                        for name, position in named_positions.items():
+                                            data.data[name] = parts[position]
 
-                            function(data, payload)
-                            unexpected_topic = False
+                                    function(data, payload)
+                                    unexpected_topic = False
 
                 if unexpected_topic:
                     _LOGGER.warning("Unexpected topic: %s", topic)
@@ -136,57 +152,71 @@ class HermesApp(HermesClient):
 
         return wrapper
 
-    def on_topic(self, topic_name: str):
+    def on_topic(self, *topic_names: str):
         """Decorator for raw topic methods."""
 
         def wrapper(function):
             def wrapped(data: TopicData, payload: bytes):
                 function(data, payload)
 
-            parts = topic_name.split(sep='/')
-            length = len(parts) - 1
-            replaced_topic_name = ''
-            has_placeholders = False
-            named_positions = {}
-            for i, part in enumerate(parts):
-                if part.startswith('{') and part.endswith('}'):
-                    replaced_topic_name += '+'
-                    named_positions[part[1:-1]] = i
-                    has_placeholders = True
+            replaced_topic_names = []
+            is_regexed = False
+
+            for topic_name in topic_names:
+                parts = topic_name.split(sep='/')
+                length = len(parts) - 1
+                replaced_topic_name = ''
+                has_placeholders = False
+                named_positions = {}
+                for i, part in enumerate(parts):
+                    if part.startswith('{') and part.endswith('}'):
+                        replaced_topic_name += '+'
+                        named_positions[part[1:-1]] = i
+                        has_placeholders = True
+                    else:
+                        replaced_topic_name += part
+
+                    if i < length:
+                        replaced_topic_name += '/'
+
+                if not has_placeholders:
+                    replaced_topic_name = topic_name
                 else:
-                    replaced_topic_name += part
+                    is_regexed = True
 
-                if i < length:
-                    replaced_topic_name += '/'
+                replaced_topic_names.append(replaced_topic_name)
 
-            if not has_placeholders:
-                replaced_topic_name = topic_name
-            else:
-                wrapped.named_positions = named_positions
+                if '+' in replaced_topic_name or '#' in replaced_topic_name:
+                    is_regexed = True
+                    tokens = replaced_topic_name.split(sep='/')
+                    pattern = ''
+                    length = len(tokens) - 1
+                    if length >= 0:
+                        for i, token in enumerate(tokens):
+                            if i == 0:
+                                pattern += '^\w+' if '+' == token or length == 0 and '#' == token else token
+                            elif i < length:
+                                pattern += '[^/]+' if '+' == token else token
+                            elif i == length:
+                                pattern += '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
 
-            if '+' in replaced_topic_name or '#' in replaced_topic_name:
-                tokens = replaced_topic_name.split(sep='/')
-                pattern = ''
-                length = len(tokens) - 1
-                if length >= 0:
-                    for i, token in enumerate(tokens):
-                        if i == 0:
-                            pattern += '^\w+' if '+' == token or length == 0 and '#' == token else token
-                        elif i < length:
-                            pattern += '[^/]+' if '+' == token else token
-                        elif i == length:
-                            pattern += '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
+                            if i < length:
+                                pattern += '/'
 
-                        if i < length:
-                            pattern += '/'
+                        if len(pattern) > 0:
+                            if not hasattr(wrapped, 'topic_extras'):
+                                wrapped.topic_extras = []
+                            wrapped.topic_extras.append((re.compile(pattern), named_positions if has_placeholders else None))
 
-                    if len(pattern) > 0:
-                        wrapped.topic_pattern = re.compile(pattern)
+                if not is_regexed:
+                    try:
+                        self._callbacks_topic[topic_name].append(wrapped)
+                    except KeyError:
+                        self._callbacks_topic[topic_name] = [wrapped]
 
-            try:
-                self._callbacks_topic[replaced_topic_name].append(wrapped)
-            except KeyError:
-                self._callbacks_topic[replaced_topic_name] = [wrapped]
+            if hasattr(wrapped, 'topic_extras'):
+                self._callbacks_topic_regex.append(wrapped)
+                self._additional_topic.extend(replaced_topic_names)
 
             return wrapped
 
