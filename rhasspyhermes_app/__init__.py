@@ -51,14 +51,14 @@ class HermesApp(HermesClient):
             str,
             List[
                 Callable[
-                    [str, bytes], None
+                    [TopicData, bytes], None
                 ]
             ],
         ] = {}
 
         self._callbacks_topic_regex: List[
             Callable[
-                [str, bytes], None
+                [TopicData, bytes], None
             ]
         ] = []
 
@@ -95,7 +95,6 @@ class HermesApp(HermesClient):
                         unexpected_topic = False
                 else:
                     for function in self._callbacks_topic_regex:
-                        # for function in callback:
                         if hasattr(function, 'topic_extras'):
                             topic_extras = getattr(function, 'topic_extras')
                             for pattern, named_positions in topic_extras:
