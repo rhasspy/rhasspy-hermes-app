@@ -281,7 +281,7 @@ class TopicData:
         ----------
         topic: str
             The topic
-        data: Optional[Dict[str, str]] = None
+        data: Dict[str, str]
             Holds extracted data for given placeholder
     """
 
