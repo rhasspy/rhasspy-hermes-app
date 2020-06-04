@@ -259,4 +259,4 @@ class HermesApp(HermesClient):
 @dataclass
 class TopicData:
     topic: str
-    custom_data: Optional[Dict[str, str]] = None
+    data: Optional[Dict[str, str]] = None
