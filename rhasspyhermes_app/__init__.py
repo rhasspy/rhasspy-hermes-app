@@ -160,59 +160,47 @@ class HermesApp(HermesClient):
                 function(data, payload)
 
             replaced_topic_names = []
-            is_regexed = False
 
             for topic_name in topic_names:
+                named_positions = {}
                 parts = topic_name.split(sep='/')
                 length = len(parts) - 1
-                replaced_topic_name = ''
-                has_placeholders = False
-                named_positions = {}
-                for i, part in enumerate(parts):
-                    if part.startswith('{') and part.endswith('}'):
-                        replaced_topic_name += '+'
-                        named_positions[part[1:-1]] = i
-                        has_placeholders = True
-                    else:
-                        replaced_topic_name += part
 
-                    if i < length:
-                        replaced_topic_name += '/'
+                def placeholder_mapper(part):
+                    i, token = tuple(part)
+                    if token.startswith('{') and token.endswith('}'):
+                        named_positions[token[1:-1]] = i
+                        return '+'
 
-                if not has_placeholders:
-                    replaced_topic_name = topic_name
-                else:
-                    is_regexed = True
+                    return token
 
-                replaced_topic_names.append(replaced_topic_name)
+                parts = list(map(placeholder_mapper, enumerate(parts)))
+                replaced_topic_name = '/'.join(parts)
 
-                if '+' in replaced_topic_name or '#' in replaced_topic_name:
-                    is_regexed = True
-                    tokens = replaced_topic_name.split(sep='/')
-                    pattern = ''
-                    length = len(tokens) - 1
-                    if length >= 0:
-                        for i, token in enumerate(tokens):
-                            if i == 0:
-                                pattern += '^\w+' if '+' == token or length == 0 and '#' == token else token
-                            elif i < length:
-                                pattern += '[^/]+' if '+' == token else token
-                            elif i == length:
-                                pattern += '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
+                def regex_mapper(part):
+                    i, token = tuple(part)
+                    value = token
+                    if i == 0:
+                        value = '^[^+#/]' if '+' == token else '[^/]+' if length == 0 and '#' == token else '^' + token
+                    elif i < length:
+                        value = '[^/]+' if '+' == token else token
+                    elif i == length:
+                        value = '[^/]+' if '#' == token else '[^/]+$' if '+' == token else token + '$'
 
-                            if i < length:
-                                pattern += '/'
+                    return value
 
-                        if len(pattern) > 0:
-                            if not hasattr(wrapped, 'topic_extras'):
-                                wrapped.topic_extras = []
-                            wrapped.topic_extras.append((re.compile(pattern), named_positions if has_placeholders else None))
+                pattern = '/'.join(map(regex_mapper, enumerate(parts)))
 
-                if not is_regexed:
+                if topic_name == pattern[1:-1]:
                     try:
                         self._callbacks_topic[topic_name].append(wrapped)
                     except KeyError:
                         self._callbacks_topic[topic_name] = [wrapped]
+                else:
+                    replaced_topic_names.append(replaced_topic_name)
+                    if not hasattr(wrapped, 'topic_extras'):
+                        wrapped.topic_extras = []
+                    wrapped.topic_extras.append((re.compile(pattern), named_positions if len(named_positions) > 0 else None))
 
             if hasattr(wrapped, 'topic_extras'):
                 self._callbacks_topic_regex.append(wrapped)
