@@ -9,3 +9,4 @@ dist/
 debian/rhasspy-hermes*
 pyinstaller/
 download/
+docs/build
