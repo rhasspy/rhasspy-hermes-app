@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import logging
+import re
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Union
 
@@ -46,12 +47,34 @@ class HermesApp(HermesClient):
             ],
         ] = {}
 
+        self._callbacks_topic: Dict[
+            str,
+            List[
+                Callable[
+                    [TopicData, bytes], None
+                ]
+            ],
+        ] = {}
+
+        self._callbacks_topic_regex: List[
+            Callable[
+                [TopicData, bytes], None
+            ]
+        ] = []
+
+        self._additional_topic: List[str] = []
+
     def _subscribe_callbacks(self):
         # Remove duplicate intent names
         intent_names = list(set(self._callbacks_intent.keys()))
         topics = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
+
+        topic_names = list(set(self._callbacks_topic.keys()))
+        topics.extend(topic_names)
+        topics.extend(self._additional_topic)
+
         self.subscribe_topics(*topics)
 
     async def on_raw_message(self, topic: str, payload: bytes):
@@ -65,16 +88,37 @@ class HermesApp(HermesClient):
                     for function in self._callbacks_intent[intent_name]:
                         function(nlu_intent)
             else:
-                _LOGGER.warning("Unexpected topic: %s", topic)
+                unexpected_topic = True
+                if topic in self._callbacks_topic:
+                    for function_1 in self._callbacks_topic[topic]:
+                        function_1(TopicData(topic, {}), payload)
+                        unexpected_topic = False
+                else:
+                    for function_2 in self._callbacks_topic_regex:
+                        if hasattr(function_2, 'topic_extras'):
+                            topic_extras = getattr(function_2, 'topic_extras')
+                            for pattern, named_positions in topic_extras:
+                                if re.match(pattern, topic) is not None:
+                                    data = TopicData(topic, {})
+                                    parts = topic.split(sep='/')
+                                    if named_positions is not None:
+                                        for name, position in named_positions.items():
+                                            data.data[name] = parts[position]
+
+                                    function_2(data, payload)
+                                    unexpected_topic = False
+
+                if unexpected_topic:
+                    _LOGGER.warning("Unexpected topic: %s", topic)
 
         except Exception:
             _LOGGER.exception("on_raw_message")
 
-    def on_intent(self, intent_name):
+    def on_intent(self, intent_name: str):
         """Decorator for intent methods."""
 
         def wrapper(function):
-            def wrapped(intent):
+            def wrapped(intent: NluIntent):
                 message = function(intent)
                 if isinstance(message, self.EndSession):
                     self.publish(
@@ -102,6 +146,64 @@ class HermesApp(HermesClient):
                 self._callbacks_intent[intent_name].append(wrapped)
             except KeyError:
                 self._callbacks_intent[intent_name] = [wrapped]
+
+            return wrapped
+
+        return wrapper
+
+    def on_topic(self, *topic_names: str):
+        """Decorator for raw topic methods."""
+
+        def wrapper(function):
+            def wrapped(data: TopicData, payload: bytes):
+                function(data, payload)
+
+            replaced_topic_names = []
+
+            for topic_name in topic_names:
+                named_positions = {}
+                parts = topic_name.split(sep='/')
+                length = len(parts) - 1
+
+                def placeholder_mapper(part):
+                    i, token = tuple(part)
+                    if token.startswith('{') and token.endswith('}'):
+                        named_positions[token[1:-1]] = i
+                        return '+'
+
+                    return token
+
+                parts = list(map(placeholder_mapper, enumerate(parts)))
+                replaced_topic_name = '/'.join(parts)
+
+                def regex_mapper(part):
+                    i, token = tuple(part)
+                    value = token
+                    if i == 0:
+                        value = '^[^+#/]' if token == '+' else '[^/]+' if length == 0 and token == '#' else '^' + token
+                    elif i < length:
+                        value = '[^/]+' if token == '+' else token
+                    elif i == length:
+                        value = '[^/]+' if token == '#' else '[^/]+$' if token == '+' else token + '$'
+
+                    return value
+
+                pattern = '/'.join(map(regex_mapper, enumerate(parts)))
+
+                if topic_name == pattern[1:-1]:
+                    try:
+                        self._callbacks_topic[topic_name].append(wrapped)
+                    except KeyError:
+                        self._callbacks_topic[topic_name] = [wrapped]
+                else:
+                    replaced_topic_names.append(replaced_topic_name)
+                    if not hasattr(wrapped, 'topic_extras'):
+                        wrapped.topic_extras = []
+                    wrapped.topic_extras.append((re.compile(pattern), named_positions if len(named_positions) > 0 else None))
+
+            if hasattr(wrapped, 'topic_extras'):
+                self._callbacks_topic_regex.append(wrapped)
+                self._additional_topic.extend(replaced_topic_names)
 
             return wrapped
 
@@ -169,3 +271,19 @@ class HermesApp(HermesClient):
 
         text: Optional[str] = None
         custom_data: Optional[str] = None
+
+
+@dataclass
+class TopicData:
+    """Helper class for topic subscription.
+
+        Attributes
+        ----------
+        topic: str
+            The topic
+        data: Dict[str, str]
+            Holds extracted data for given placeholder
+    """
+
+    topic: str
+    data: Dict[str, str]
