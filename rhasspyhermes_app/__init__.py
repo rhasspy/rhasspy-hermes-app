@@ -121,26 +121,32 @@ class HermesApp(HermesClient):
             def wrapped(intent: NluIntent):
                 message = function(intent)
                 if isinstance(message, self.EndSession):
-                    self.publish(
-                        DialogueEndSession(
-                            session_id=intent.session_id,
-                            site_id=intent.site_id,
-                            text=message.text,
-                            custom_data=message.custom_data,
+                    if intent.session_id is not None:
+                        self.publish(
+                            DialogueEndSession(
+                                session_id=intent.session_id,
+                                site_id=intent.site_id,
+                                text=message.text,
+                                custom_data=message.custom_data,
+                            )
                         )
-                    )
+                    else:
+                        _LOGGER.error("Cannot end session of intent without session ID.")
                 elif isinstance(message, self.ContinueSession):
-                    self.publish(
-                        DialogueContinueSession(
-                            session_id=intent.session_id,
-                            site_id=intent.site_id,
-                            text=message.text,
-                            intent_filter=message.intent_filter,
-                            custom_data=message.custom_data,
-                            send_intent_not_recognized=message.send_intent_not_recognized,
-                            slot=message.slot,
+                    if intent.session_id is not None:
+                        self.publish(
+                            DialogueContinueSession(
+                                session_id=intent.session_id,
+                                site_id=intent.site_id,
+                                text=message.text,
+                                intent_filter=message.intent_filter,
+                                custom_data=message.custom_data,
+                                send_intent_not_recognized=message.send_intent_not_recognized,
+                                slot=message.slot,
+                            )
                         )
-                    )
+                    else:
+                        _LOGGER.error("Cannot continue session of intent without session ID.")
 
             try:
                 self._callbacks_intent[intent_name].append(wrapped)
