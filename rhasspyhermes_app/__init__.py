@@ -103,7 +103,7 @@ class HermesApp(HermesClient):
         except Exception:
             _LOGGER.exception("on_raw_message")
 
-    def on_intent(self, intent_name: str):
+    def on_intent(self, *intent_names: str):
         """Decorator for intent methods."""
 
         def wrapper(function):
@@ -141,10 +141,11 @@ class HermesApp(HermesClient):
                             "Cannot continue session of intent without session ID."
                         )
 
-            try:
-                self._callbacks_intent[intent_name].append(wrapped)
-            except KeyError:
-                self._callbacks_intent[intent_name] = [wrapped]
+            for intent_name in intent_names:
+                try:
+                    self._callbacks_intent[intent_name].append(wrapped)
+                except KeyError:
+                    self._callbacks_intent[intent_name] = [wrapped]
 
             return wrapped
 
