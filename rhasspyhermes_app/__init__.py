@@ -47,20 +47,9 @@ class HermesApp(HermesClient):
             ],
         ] = {}
 
-        self._callbacks_topic: Dict[
-            str,
-            List[
-                Callable[
-                    [TopicData, bytes], None
-                ]
-            ],
-        ] = {}
+        self._callbacks_topic: Dict[str, List[Callable[[TopicData, bytes], None]]] = {}
 
-        self._callbacks_topic_regex: List[
-            Callable[
-                [TopicData, bytes], None
-            ]
-        ] = []
+        self._callbacks_topic_regex: List[Callable[[TopicData, bytes], None]] = []
 
         self._additional_topic: List[str] = []
 
@@ -95,12 +84,12 @@ class HermesApp(HermesClient):
                         unexpected_topic = False
                 else:
                     for function_2 in self._callbacks_topic_regex:
-                        if hasattr(function_2, 'topic_extras'):
-                            topic_extras = getattr(function_2, 'topic_extras')
+                        if hasattr(function_2, "topic_extras"):
+                            topic_extras = getattr(function_2, "topic_extras")
                             for pattern, named_positions in topic_extras:
                                 if re.match(pattern, topic) is not None:
                                     data = TopicData(topic, {})
-                                    parts = topic.split(sep='/')
+                                    parts = topic.split(sep="/")
                                     if named_positions is not None:
                                         for name, position in named_positions.items():
                                             data.data[name] = parts[position]
@@ -131,7 +120,9 @@ class HermesApp(HermesClient):
                             )
                         )
                     else:
-                        _LOGGER.error("Cannot end session of intent without session ID.")
+                        _LOGGER.error(
+                            "Cannot end session of intent without session ID."
+                        )
                 elif isinstance(message, self.ContinueSession):
                     if intent.session_id is not None:
                         self.publish(
@@ -146,7 +137,9 @@ class HermesApp(HermesClient):
                             )
                         )
                     else:
-                        _LOGGER.error("Cannot continue session of intent without session ID.")
+                        _LOGGER.error(
+                            "Cannot continue session of intent without session ID."
+                        )
 
             try:
                 self._callbacks_intent[intent_name].append(wrapped)
@@ -168,33 +161,45 @@ class HermesApp(HermesClient):
 
             for topic_name in topic_names:
                 named_positions = {}
-                parts = topic_name.split(sep='/')
+                parts = topic_name.split(sep="/")
                 length = len(parts) - 1
 
                 def placeholder_mapper(part):
                     i, token = tuple(part)
-                    if token.startswith('{') and token.endswith('}'):
+                    if token.startswith("{") and token.endswith("}"):
                         named_positions[token[1:-1]] = i
-                        return '+'
+                        return "+"
 
                     return token
 
                 parts = list(map(placeholder_mapper, enumerate(parts)))
-                replaced_topic_name = '/'.join(parts)
+                replaced_topic_name = "/".join(parts)
 
                 def regex_mapper(part):
                     i, token = tuple(part)
                     value = token
                     if i == 0:
-                        value = '^[^+#/]' if token == '+' else '[^/]+' if length == 0 and token == '#' else '^' + token
+                        value = (
+                            "^[^+#/]"
+                            if token == "+"
+                            else "[^/]+"
+                            if length == 0 and token == "#"
+                            else "^" + token
+                        )
                     elif i < length:
-                        value = '[^/]+' if token == '+' else token
+                        value = "[^/]+" if token == "+" else token
                     elif i == length:
-                        value = '[^/]+' if token == '#' else '[^/]+$' if token == '+' else token + '$'
+                        value = (
+                            "[^/]+"
+                            if token == "#"
+                            else "[^/]+$"
+                            if token == "+"
+                            else token + "$"
+                        )
 
                     return value
 
-                pattern = '/'.join(map(regex_mapper, enumerate(parts)))
+                pattern = "/".join(map(regex_mapper, enumerate(parts)))
 
                 if topic_name == pattern[1:-1]:
                     try:
@@ -203,11 +208,16 @@ class HermesApp(HermesClient):
                         self._callbacks_topic[topic_name] = [wrapped]
                 else:
                     replaced_topic_names.append(replaced_topic_name)
-                    if not hasattr(wrapped, 'topic_extras'):
+                    if not hasattr(wrapped, "topic_extras"):
                         wrapped.topic_extras = []
-                    wrapped.topic_extras.append((re.compile(pattern), named_positions if len(named_positions) > 0 else None))
+                    wrapped.topic_extras.append(
+                        (
+                            re.compile(pattern),
+                            named_positions if len(named_positions) > 0 else None,
+                        )
+                    )
 
-            if hasattr(wrapped, 'topic_extras'):
+            if hasattr(wrapped, "topic_extras"):
                 self._callbacks_topic_regex.append(wrapped)
                 self._additional_topic.extend(replaced_topic_names)
 

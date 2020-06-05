@@ -9,7 +9,9 @@ app = HermesApp("RawTopicApp")
 
 @app.on_topic("hermes/hotword/{hotword}/detected")
 def test_topic1(data: TopicData, payload: bytes):
-    _LOGGER.debug(f"topic1: {data.topic}, hotword: {data.data.get('hotword')}, payload: {payload.decode('utf-8')}")
+    _LOGGER.debug(
+        f"topic1: {data.topic}, hotword: {data.data.get('hotword')}, payload: {payload.decode('utf-8')}"
+    )
 
 
 @app.on_topic("hermes/dialogueManager/sessionStarted")
