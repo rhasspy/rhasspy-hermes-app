@@ -29,7 +29,7 @@ jobs:
         run: make venv
       - name: Check code
         run: make check
-      - name: Test code
-        run: make test
+      #- name: Test code
+      #  run: make test
       - name: Make package
         run: make dist
