@@ -20,26 +20,7 @@ class HermesApp(HermesClient):
 
     Example:
 
-    .. code-block:: python
-
-        from datetime import datetime
-        import logging
-
-        from rhasspyhermes.nlu import NluIntent
-        from rhasspyhermes_app import HermesApp
-
-        _LOGGER = logging.getLogger("TimeApp")
-
-        app = HermesApp("TimeApp")
-
-
-        @app.on_intent("GetTime")
-        def get_time(intent: NluIntent):
-            now = datetime.now().strftime("%H %M")
-            return app.EndSession(f"It's {now}")
-
-
-        app.run()
+    .. literalinclude:: ../time_app.py
     """
 
     def __init__(
@@ -106,7 +87,15 @@ class HermesApp(HermesClient):
         self.subscribe_topics(*topics)
 
     async def on_raw_message(self, topic: str, payload: bytes):
-        """Received message from MQTT broker."""
+        """This method handles messages from the MQTT broker.
+
+        Args:
+            topic (str): The topic of the received MQTT message.
+
+            payload (bytes): The payload of the received MQTT message.
+
+        .. warning:: Don't override this method in your app. This is where all the magic happens in Rhasspy Hermes App.
+        """
         try:
             if NluIntent.is_topic(topic):
                 # hermes/intent/<intent_name>
@@ -143,7 +132,23 @@ class HermesApp(HermesClient):
             _LOGGER.exception("on_raw_message")
 
     def on_intent(self, *intent_names: str):
-        """Decorator for intent methods."""
+        """Apply this decorator to a function that you want to act on a received intent.
+
+        Args:
+            *intent_names (str): Names of the intents you want the function to act on.
+
+        The function needs to have the following signature:
+
+        function(intent: :class:`rhasspyhermes.nlu.NluIntent`)
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_intent("GetTime")
+            def get_time(intent: NluIntent):
+                return app.EndSession("It's too late.")
+        """
 
         def wrapper(function):
             def wrapped(intent: NluIntent):
@@ -191,7 +196,27 @@ class HermesApp(HermesClient):
         return wrapper
 
     def on_topic(self, *topic_names: str):
-        """Decorator for raw topic methods."""
+        """Apply this decorator to a function that you want to act on a received raw MQTT message.
+
+        Args:
+            *topic_names (str): The MQTT topics you want the function to act on.
+
+        The function needs to have the following signature:
+
+        function(data: :class:`TopicData`, payload: bytes)
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_topic("hermes/+/{site_id}/playBytes/#")
+            def test_topic1(data: TopicData, payload: bytes):
+                _LOGGER.debug("topic: %s, site_id: %s", data.topic, data.data.get("site_id"))
+
+        .. note:: The topic names can contain MQTT wildcards (`+` and `#`) or templates (`{foobar}`).
+            In the latter case the value of the named template is available in the decorated function
+            as part of the ``data`` argument.
+        """
 
         def wrapper(function):
             def wrapped(data: TopicData, payload: bytes):
@@ -266,7 +291,12 @@ class HermesApp(HermesClient):
         return wrapper
 
     def run(self):
-        """Run the app."""
+        """Run the app. This method:
+
+        - subscribes to all MQTT topics for the functions you decorated;
+        - connects to the MQTT broker;
+        - starts the MQTT event loop and reacts to received MQTT messages.
+        """
         # Subscribe to callbacks
         self._subscribe_callbacks()
 
