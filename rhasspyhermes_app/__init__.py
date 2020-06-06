@@ -56,10 +56,7 @@ class HermesApp(HermesClient):
         self._callbacks_intent: typing.Dict[
             str,
             typing.List[
-                typing.Callable[
-                    [NluIntent],
-                    typing.Union[HermesApp.ContinueSession, HermesApp.EndSession],
-                ]
+                typing.Callable[[NluIntent], typing.Union[ContinueSession, EndSession]]
             ],
         ] = {}
 
@@ -147,13 +144,13 @@ class HermesApp(HermesClient):
 
             @app.on_intent("GetTime")
             def get_time(intent: NluIntent):
-                return app.EndSession("It's too late.")
+                return EndSession("It's too late.")
         """
 
         def wrapper(function):
             def wrapped(intent: NluIntent):
                 message = function(intent)
-                if isinstance(message, self.EndSession):
+                if isinstance(message, EndSession):
                     if intent.session_id is not None:
                         self.publish(
                             DialogueEndSession(
@@ -167,7 +164,7 @@ class HermesApp(HermesClient):
                         _LOGGER.error(
                             "Cannot end session of intent without session ID."
                         )
-                elif isinstance(message, self.ContinueSession):
+                elif isinstance(message, ContinueSession):
                     if intent.session_id is not None:
                         self.publish(
                             DialogueContinueSession(
@@ -177,7 +174,6 @@ class HermesApp(HermesClient):
                                 intent_filter=message.intent_filter,
                                 custom_data=message.custom_data,
                                 send_intent_not_recognized=message.send_intent_not_recognized,
-                                slot=message.slot,
                             )
                         )
                     else:
@@ -313,62 +309,48 @@ class HermesApp(HermesClient):
         finally:
             self.mqtt_client.loop_stop()
 
-    @dataclass
-    class ContinueSession:
-        """Helper class to continue the current session.
 
-        Attributes
-        ----------
+@dataclass
+class ContinueSession:
+    """Helper class to continue the current session.
 
-        text: typing.Optional[str] = None
-            The text the TTS should say to start this additional request of the
-            session.
-        intent_filter: typing.Optional[typing.List[str]] = None
-            A list of intents names to restrict the NLU resolution on the answer of
-            this query.
-        custom_data: typing.Optional[str] = None
-            An update to the session's custom data. If not provided, the custom data
+    Attributes:
+        text (str, optional): The text the TTS should say to start this additional request of the session.
+        intent_filter (List[str], optional): A list of intents names to restrict the NLU resolution on the
+            answer of this query.
+        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
             will stay the same.
-        send_intent_not_recognized: bool = False
-            Indicates whether the dialogue manager should handle non recognized
+        send_intent_not_recognized (bool): Indicates whether the dialogue manager should handle non recognized
             intents by itself or send them for the client to handle.
-        slot: typing.Optional[str] = None
-            Unused
-        """
+    """
 
-        custom_data: typing.Optional[str] = None
-        text: typing.Optional[str] = None
-        intent_filter: typing.Optional[typing.List[str]] = None
-        send_intent_not_recognized: bool = False
-        slot: typing.Optional[str] = None
+    custom_data: typing.Optional[str] = None
+    text: typing.Optional[str] = None
+    intent_filter: typing.Optional[typing.List[str]] = None
+    send_intent_not_recognized: bool = False
 
-    @dataclass
-    class EndSession:
-        """Helper class to end the current session.
 
-        Attributes
-        ----------
-        text: typing.Optional[str] = None
-            The text the TTS should say to end the session
-        custom_data: typing.Optional[str] = None
-            An update to the session's custom data. If not provided, the custom data
+@dataclass
+class EndSession:
+    """Helper class to end the current session.
+
+    Attributes:
+        text (str, optional): The text the TTS should say to end the session.
+        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
             will stay the same.
-        """
+    """
 
-        text: typing.Optional[str] = None
-        custom_data: typing.Optional[str] = None
+    text: typing.Optional[str] = None
+    custom_data: typing.Optional[str] = None
 
 
 @dataclass
 class TopicData:
     """Helper class for topic subscription.
 
-        Attributes
-        ----------
-        topic: str
-            The topic
-        data: typing.Dict[str, str]
-            Holds extracted data for given placeholder
+    Attributes:
+        topic (str): The MQTT topic.
+        data (Dict[str, str]): A dictionary holding extracted data for the given placeholder.
     """
 
     topic: str
