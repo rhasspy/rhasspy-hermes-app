@@ -11,6 +11,7 @@ import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes.client import HermesClient
 from rhasspyhermes.dialogue import DialogueContinueSession, DialogueEndSession
 from rhasspyhermes.nlu import NluIntent
+from rhasspyhermes.wake import HotwordDetected
 
 _LOGGER = logging.getLogger("HermesApp")
 
@@ -53,6 +54,10 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
+        self._callbacks_hotword: typing.List[
+            typing.Callable[[HotwordDetected], None]
+        ] = []
+
         self._callbacks_intent: typing.Dict[
             str,
             typing.List[
@@ -77,6 +82,9 @@ class HermesApp(HermesClient):
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
 
+        if self._callbacks_hotword:
+            topics.append(HotwordDetected.topic())
+
         topic_names = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
         topics.extend(self._additional_topic)
@@ -94,13 +102,18 @@ class HermesApp(HermesClient):
         .. warning:: Don't override this method in your app. This is where all the magic happens in Rhasspy Hermes App.
         """
         try:
-            if NluIntent.is_topic(topic):
+            if HotwordDetected.is_topic(topic):
+                # hermes/hotword/<wakeword_id>/detected
+                hotword_detected = HotwordDetected.from_json(payload)
+                for function_h in self._callbacks_hotword:
+                    function_h(hotword_detected)
+            elif NluIntent.is_topic(topic):
                 # hermes/intent/<intent_name>
                 nlu_intent = NluIntent.from_json(payload)
                 intent_name = nlu_intent.intent.intent_name
                 if intent_name in self._callbacks_intent:
-                    for function in self._callbacks_intent[intent_name]:
-                        function(nlu_intent)
+                    for function_i in self._callbacks_intent[intent_name]:
+                        function_i(nlu_intent)
             else:
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
@@ -127,6 +140,26 @@ class HermesApp(HermesClient):
 
         except Exception:
             _LOGGER.exception("on_raw_message")
+
+    def on_hotword(self, function):
+        """Apply this decorator to a function that you want to act on a detected hotword.
+
+        The function needs to have the following signature:
+
+        function(hotword: :class:`rhasspyhermes.wake.HotwordDetected`)
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_hotword
+            def wake(hotword):
+                print(f"Hotword {hotword.model_id} detected on site {hotword.site_id}")
+        """
+
+        self._callbacks_hotword.append(function)
+
+        return function
 
     def on_intent(self, *intent_names: str):
         """Apply this decorator to a function that you want to act on a received intent.
