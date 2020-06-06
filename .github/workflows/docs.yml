@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip setuptools
           python -m pip install -r requirements_dev.txt
       - name: Build Site
-        run: ./scripts/build-docs.sh
+        run: make docs
       - name: Deploy Site
         uses: peaceiris/actions-gh-pages@v3
         with:

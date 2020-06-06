@@ -1,3 +1,4 @@
+"""Example app using topic lists for receiving raw MQTT messages."""
 import logging
 
 from rhasspyhermes_app import HermesApp, TopicData
@@ -14,12 +15,13 @@ app = HermesApp("RawTopicApp")
     "hermes/+/{site_id}/playBytes/#",
 )
 def test_topic1(data: TopicData, payload: bytes):
+    """Receive MQTT messages for the subscribed topics."""
     if "hotword" in data.topic:
-        _LOGGER.debug(f"topic: {data.topic}, hotword: {data.data.get('hotword')}")
+        _LOGGER.debug("topic: %s, hotword: %s", data.topic, data.data.get("hotword"))
     elif "playBytes" in data.topic:
-        _LOGGER.debug(f"topic: {data.topic}, site_id: {data.data.get('site_id')}")
+        _LOGGER.debug("topic: %s, site_id: %s", data.topic, data.data.get("hotword"))
     else:
-        _LOGGER.debug(f"topic: {data.topic}, payload: {payload.decode('utf-8')}")
+        _LOGGER.debug("topic: %s, payload: %s", data.topic, data.data.get("hotword"))
 
 
 app.run()

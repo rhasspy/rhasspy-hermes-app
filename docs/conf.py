@@ -1,5 +1,5 @@
-# Configuration file for the Sphinx documentation builder.
-#
+"""Configuration file for the Sphinx documentation of rhasspy-hermes-app."""
+
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Rhasspy Hermes App"
+# pylint: disable=redefined-builtin
 copyright = "2020, Koen Vervloesem"
 author = "Koen Vervloesem"
 
@@ -30,7 +31,12 @@ author = "Koen Vervloesem"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
     "sphinx.ext.githubpages",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -53,3 +59,22 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ['_static']
+
+# -- Extension configuration -------------------------------------------------
+
+# -- Options for intersphinx extension ---------------------------------------
+
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+# -- Options for todo extension ----------------------------------------------
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
+
+# -- Options for Napoleon extension ------------------------------------------
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_include_init_with_doc = True
+
+# -- Options for autodoc extension -------------------------------------------
+autodoc_default_options = {"show-inheritance": True}

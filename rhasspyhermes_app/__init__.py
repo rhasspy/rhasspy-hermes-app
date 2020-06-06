@@ -3,8 +3,8 @@ import argparse
 import asyncio
 import logging
 import re
+import typing
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
@@ -16,10 +16,44 @@ _LOGGER = logging.getLogger("HermesApp")
 
 
 class HermesApp(HermesClient):
-    """A Rhasspy app using the Hermes protocol."""
+    """A Rhasspy app using the Hermes protocol.
 
-    def __init__(self, name: str, parser: argparse.ArgumentParser = None):
-        """Initialize the Rhasspy Hermes app."""
+    Example:
+
+    .. code-block:: python
+
+        from datetime import datetime
+        import logging
+
+        from rhasspyhermes.nlu import NluIntent
+        from rhasspyhermes_app import HermesApp
+
+        _LOGGER = logging.getLogger("TimeApp")
+
+        app = HermesApp("TimeApp")
+
+
+        @app.on_intent("GetTime")
+        def get_time(intent: NluIntent):
+            now = datetime.now().strftime("%H %M")
+            return app.EndSession(f"It's {now}")
+
+
+        app.run()
+    """
+
+    def __init__(
+        self, name: str, parser: typing.Optional[argparse.ArgumentParser] = None
+    ):
+        """Initialize the Rhasspy Hermes app.
+
+        Args:
+            name (str): The name of this object.
+
+            parser (:class:`argparse.ArgumentParser`, optional): An argument parser.
+                If the argument is not specified, the object creates an
+                argument parser itself.
+        """
         if parser is None:
             parser = argparse.ArgumentParser(prog=name)
         # Add default arguments
@@ -38,20 +72,25 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_intent: Dict[
+        self._callbacks_intent: typing.Dict[
             str,
-            List[
-                Callable[
-                    [NluIntent], Union[HermesApp.ContinueSession, HermesApp.EndSession]
+            typing.List[
+                typing.Callable[
+                    [NluIntent],
+                    typing.Union[HermesApp.ContinueSession, HermesApp.EndSession],
                 ]
             ],
         ] = {}
 
-        self._callbacks_topic: Dict[str, List[Callable[[TopicData, bytes], None]]] = {}
+        self._callbacks_topic: typing.Dict[
+            str, typing.List[typing.Callable[[TopicData, bytes], None]]
+        ] = {}
 
-        self._callbacks_topic_regex: List[Callable[[TopicData, bytes], None]] = []
+        self._callbacks_topic_regex: typing.List[
+            typing.Callable[[TopicData, bytes], None]
+        ] = []
 
-        self._additional_topic: List[str] = []
+        self._additional_topic: typing.List[str] = []
 
     def _subscribe_callbacks(self):
         # Remove duplicate intent names
@@ -251,27 +290,27 @@ class HermesApp(HermesClient):
         Attributes
         ----------
 
-        text: Optional[str] = None
+        text: typing.Optional[str] = None
             The text the TTS should say to start this additional request of the
             session.
-        intent_filter: Optional[List[str]] = None
+        intent_filter: typing.Optional[typing.List[str]] = None
             A list of intents names to restrict the NLU resolution on the answer of
             this query.
-        custom_data: Optional[str] = None
+        custom_data: typing.Optional[str] = None
             An update to the session's custom data. If not provided, the custom data
             will stay the same.
         send_intent_not_recognized: bool = False
             Indicates whether the dialogue manager should handle non recognized
             intents by itself or send them for the client to handle.
-        slot: Optional[str] = None
+        slot: typing.Optional[str] = None
             Unused
         """
 
-        custom_data: Optional[str] = None
-        text: Optional[str] = None
-        intent_filter: Optional[List[str]] = None
+        custom_data: typing.Optional[str] = None
+        text: typing.Optional[str] = None
+        intent_filter: typing.Optional[typing.List[str]] = None
         send_intent_not_recognized: bool = False
-        slot: Optional[str] = None
+        slot: typing.Optional[str] = None
 
     @dataclass
     class EndSession:
@@ -279,15 +318,15 @@ class HermesApp(HermesClient):
 
         Attributes
         ----------
-        text: Optional[str] = None
+        text: typing.Optional[str] = None
             The text the TTS should say to end the session
-        custom_data: Optional[str] = None
+        custom_data: typing.Optional[str] = None
             An update to the session's custom data. If not provided, the custom data
             will stay the same.
         """
 
-        text: Optional[str] = None
-        custom_data: Optional[str] = None
+        text: typing.Optional[str] = None
+        custom_data: typing.Optional[str] = None
 
 
 @dataclass
@@ -298,9 +337,9 @@ class TopicData:
         ----------
         topic: str
             The topic
-        data: Dict[str, str]
+        data: typing.Dict[str, str]
             Holds extracted data for given placeholder
     """
 
     topic: str
-    data: Dict[str, str]
+    data: typing.Dict[str, str]

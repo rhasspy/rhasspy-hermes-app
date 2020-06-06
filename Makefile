@@ -1,11 +1,11 @@
 SHELL := bash
 PACKAGE_NAME = $(shell basename "$$PWD")
 PYTHON_NAME = $(shell echo "$(PACKAGE_NAME)" | sed -e 's/-//' | sed -e 's/-/_/g')
-PYTHON_FILES = $(PYTHON_NAME)/*.py tests/*.py setup.py
+PYTHON_FILES = $(PYTHON_NAME)/*.py *.py docs/conf.py
 SHELL_FILES = bin/* debian/bin/*
 PIP_INSTALL ?= install
 
-.PHONY: reformat check dist venv test pyinstaller debian deploy
+.PHONY: reformat check dist venv test pyinstaller debian deploy docs
 
 version := $(shell cat VERSION)
 architecture := $(shell dpkg-architecture | grep DEB_BUILD_ARCH= | sed 's/[^=]\+=//')
@@ -32,6 +32,9 @@ sdist:
 
 test:
 	scripts/run-tests.sh $(PYTHON_NAME)
+
+docs:
+	scripts/build-docs.sh
 
 # -----------------------------------------------------------------------------
 # Docker

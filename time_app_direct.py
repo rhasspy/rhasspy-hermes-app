@@ -1,14 +1,14 @@
+"""Example app using Rhasspy Hermes directly."""
 import argparse
 import asyncio
-from datetime import datetime
 import logging
 import typing
+from datetime import datetime
 
 import paho.mqtt.client as mqtt
-from rhasspyhermes.base import Message
 import rhasspyhermes.cli as hermes_cli
-from rhasspyhermes.client import GeneratorType, HermesClient
-from rhasspyhermes.dialogue import DialogueEndSession, DialogueSessionStarted
+from rhasspyhermes.client import HermesClient
+from rhasspyhermes.dialogue import DialogueEndSession
 from rhasspyhermes.nlu import NluIntent
 
 _LOGGER = logging.getLogger("TimeApp")
@@ -31,15 +31,20 @@ class TimeApp(HermesClient):
                 nlu_intent = NluIntent.from_json(payload)
                 if nlu_intent.intent.intent_name == "GetTime":
                     now = datetime.now().strftime("%H %M")
-                    self.publish(
-                        DialogueEndSession(
-                            session_id=nlu_intent.session_id,
-                            site_id=nlu_intent.site_id,
-                            text=f"It's {now}",
+                    if nlu_intent.session_id is not None:
+                        self.publish(
+                            DialogueEndSession(
+                                session_id=nlu_intent.session_id,
+                                site_id=nlu_intent.site_id,
+                                text=f"It's {now}",
+                            )
                         )
-                    )
+                    else:
+                        _LOGGER.error(
+                            "Cannot end session of intent without session ID."
+                        )
             else:
-                _LOGGER.warning("Unexpected message: %s", message)
+                _LOGGER.warning("Unexpected topic: %s", topic)
 
         except Exception:
             _LOGGER.exception("on_raw_message")
