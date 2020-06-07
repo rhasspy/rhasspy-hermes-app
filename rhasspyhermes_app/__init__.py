@@ -125,9 +125,9 @@ class HermesApp(HermesClient):
                         function_i(nlu_intent)
             elif NluIntentNotRecognized.is_topic(topic):
                 # hermes/nlu/intentNotRecognized
-                nlu_intent_not_Recognized = NluIntentNotRecognized.from_json(payload)
+                nlu_intent_not_recognized = NluIntentNotRecognized.from_json(payload)
                 for function_inr in self._callbacks_intent_not_recognized:
-                    function_inr(nlu_intent_not_Recognized)
+                    function_inr(nlu_intent_not_recognized)
             else:
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
