@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes.client import HermesClient
 from rhasspyhermes.dialogue import DialogueContinueSession, DialogueEndSession
-from rhasspyhermes.nlu import NluIntent
+from rhasspyhermes.nlu import NluIntent, NluIntentNotRecognized
 from rhasspyhermes.wake import HotwordDetected
 
 _LOGGER = logging.getLogger("HermesApp")
@@ -65,6 +65,12 @@ class HermesApp(HermesClient):
             ],
         ] = {}
 
+        self._callbacks_intent_not_recognized: typing.List[
+            typing.Callable[
+                [NluIntentNotRecognized], typing.Union[ContinueSession, EndSession]
+            ]
+        ] = []
+
         self._callbacks_topic: typing.Dict[
             str, typing.List[typing.Callable[[TopicData, bytes], None]]
         ] = {}
@@ -84,6 +90,9 @@ class HermesApp(HermesClient):
 
         if self._callbacks_hotword:
             topics.append(HotwordDetected.topic())
+
+        if self._callbacks_intent_not_recognized:
+            topics.append(NluIntentNotRecognized.topic())
 
         topic_names = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
@@ -114,6 +123,11 @@ class HermesApp(HermesClient):
                 if intent_name in self._callbacks_intent:
                     for function_i in self._callbacks_intent[intent_name]:
                         function_i(nlu_intent)
+            elif NluIntentNotRecognized.is_topic(topic):
+                # hermes/nlu/intentNotRecognized
+                nlu_intent_not_Recognized = NluIntentNotRecognized.from_json(payload)
+                for function_inr in self._callbacks_intent_not_recognized:
+                    function_inr(nlu_intent_not_Recognized)
             else:
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
@@ -223,6 +237,27 @@ class HermesApp(HermesClient):
             return wrapped
 
         return wrapper
+
+    def on_intent_not_recognized(self, function):
+        """Apply this decorator to a function that you want to act when the NLU system
+        hasn't recognized an intent.
+
+        The function needs to have the following signature:
+
+        function(intent_not_recognized: :class:`rhasspyhermes.nlu.IntentNotRecognized`)
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_intent_not_recognized
+            def notunderstood(intent_not_recognized):
+                print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
+        """
+
+        self._callbacks_intent_not_recognized.append(function)
+
+        return function
 
     def on_topic(self, *topic_names: str):
         """Apply this decorator to a function that you want to act on a received raw MQTT message.
