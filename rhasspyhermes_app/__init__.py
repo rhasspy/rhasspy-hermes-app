@@ -113,21 +113,38 @@ class HermesApp(HermesClient):
         try:
             if HotwordDetected.is_topic(topic):
                 # hermes/hotword/<wakeword_id>/detected
-                hotword_detected = HotwordDetected.from_json(payload)
-                for function_h in self._callbacks_hotword:
-                    function_h(hotword_detected)
+                try:
+                    hotword_detected = HotwordDetected.from_json(payload)
+                    for function_h in self._callbacks_hotword:
+                        function_h(hotword_detected)
+                except KeyError as key:
+                    _LOGGER.error(
+                        "Missing key %s in JSON payload for %s: %s", key, topic, payload
+                    )
             elif NluIntent.is_topic(topic):
                 # hermes/intent/<intent_name>
-                nlu_intent = NluIntent.from_json(payload)
-                intent_name = nlu_intent.intent.intent_name
-                if intent_name in self._callbacks_intent:
-                    for function_i in self._callbacks_intent[intent_name]:
-                        function_i(nlu_intent)
+                try:
+                    nlu_intent = NluIntent.from_json(payload)
+                    intent_name = nlu_intent.intent.intent_name
+                    if intent_name in self._callbacks_intent:
+                        for function_i in self._callbacks_intent[intent_name]:
+                            function_i(nlu_intent)
+                except KeyError as key:
+                    _LOGGER.error(
+                        "Missing key %s in JSON payload for %s: %s", key, topic, payload
+                    )
             elif NluIntentNotRecognized.is_topic(topic):
                 # hermes/nlu/intentNotRecognized
-                nlu_intent_not_recognized = NluIntentNotRecognized.from_json(payload)
-                for function_inr in self._callbacks_intent_not_recognized:
-                    function_inr(nlu_intent_not_recognized)
+                try:
+                    nlu_intent_not_recognized = NluIntentNotRecognized.from_json(
+                        payload
+                    )
+                    for function_inr in self._callbacks_intent_not_recognized:
+                        function_inr(nlu_intent_not_recognized)
+                except KeyError as key:
+                    _LOGGER.error(
+                        "Missing key %s in JSON payload for %s: %s", key, topic, payload
+                    )
             else:
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
