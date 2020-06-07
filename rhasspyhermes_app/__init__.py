@@ -19,13 +19,19 @@ _LOGGER = logging.getLogger("HermesApp")
 class HermesApp(HermesClient):
     """A Rhasspy app using the Hermes protocol.
 
+    Attributes:
+        args (:class:`argparse.Namespace`): Command-line arguments for the Hermes app.
+
     Example:
 
     .. literalinclude:: ../time_app.py
     """
 
     def __init__(
-        self, name: str, parser: typing.Optional[argparse.ArgumentParser] = None
+        self,
+        name: str,
+        parser: typing.Optional[argparse.ArgumentParser] = None,
+        mqtt_client: typing.Optional[mqtt.Client] = None,
     ):
         """Initialize the Rhasspy Hermes app.
 
@@ -35,6 +41,9 @@ class HermesApp(HermesClient):
             parser (:class:`argparse.ArgumentParser`, optional): An argument parser.
                 If the argument is not specified, the object creates an
                 argument parser itself.
+
+            mqtt_client (:class:`paho.mqtt.client.Client`, optional): An MQTT client. If the argument
+                is not specified, the object creates an MQTT client itself.
         """
         if parser is None:
             parser = argparse.ArgumentParser(prog=name)
@@ -49,7 +58,8 @@ class HermesApp(HermesClient):
         _LOGGER.debug(self.args)
 
         # Create MQTT client
-        mqtt_client = mqtt.Client()
+        if mqtt_client is None:
+            mqtt_client = mqtt.Client()
 
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)

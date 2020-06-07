@@ -1,7 +1,7 @@
 SHELL := bash
 PACKAGE_NAME = $(shell basename "$$PWD")
 PYTHON_NAME = $(shell echo "$(PACKAGE_NAME)" | sed -e 's/-//' | sed -e 's/-/_/g')
-PYTHON_FILES = $(PYTHON_NAME)/*.py *.py docs/conf.py
+PYTHON_FILES = $(PYTHON_NAME)/*.py tests/*.py *.py docs/conf.py
 SHELL_FILES = bin/* debian/bin/*
 PIP_INSTALL ?= install
 
