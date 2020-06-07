@@ -19,7 +19,7 @@ However, the result [still needs a lot of lines of code](time_app_direct.py). If
 from datetime import datetime
 import logging
 
-from rhasspyhermes_app import HermesApp
+from rhasspyhermes_app import EndSession, HermesApp
 
 _LOGGER = logging.getLogger("TimeApp")
 
@@ -29,7 +29,7 @@ app = HermesApp("TimeApp")
 @app.on_intent("GetTime")
 def get_time(intent):
     now = datetime.now().strftime("%H %M")
-    return app.EndSession(f"It's {now}")
+    return EndSession(f"It's {now}")
 
 
 app.run()
