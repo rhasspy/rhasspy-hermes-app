@@ -1,20 +1,30 @@
 """Tests for rhasspyhermes_app hotword."""
-from rhasspyhermes.wake import HotwordDetected
+# pylint: disable=protected-access
+import asyncio
 
+import pytest
+from rhasspyhermes.wake import HotwordDetected
 from rhasspyhermes_app import HermesApp
 
-# pylint: disable=protected-access
+HOTWORD_TOPIC = "hermes/hotword/test/detected"
+HOTWORD_PAYLOAD = '{"modelId": "test_model.ppn", "modelVersion": "", "modelType": "personal", "currentSensitivity": 0.5, "siteId": "test_site", "sessionId": null, "sendAudioCaptured": null}'.encode()
+
+_LOOP = asyncio.get_event_loop()
 
 
-def test_callbacks_hotword(mocker):
+@pytest.mark.asyncio
+async def test_callbacks_hotword(mocker):
     """Test hotword callbacks."""
     app = HermesApp("Test HotwordDetected", mqtt_client=mocker.MagicMock())
 
-    @app.on_hotword
-    # pylint: disable=unused-variable
-    def wake(hotword: HotwordDetected):
-        print(f"Hotword {hotword.model_id} detected on site {hotword.site_id}")
+    wake = mocker.MagicMock()
+
+    app.on_hotword(wake)
 
     app._subscribe_callbacks()
 
     assert len(app._callbacks_hotword) == 1
+
+    await app.on_raw_message(HOTWORD_TOPIC, HOTWORD_PAYLOAD)
+
+    wake.assert_called_once_with(HotwordDetected.from_json(HOTWORD_PAYLOAD))
