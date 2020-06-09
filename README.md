@@ -5,9 +5,9 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/rhasspy-hermes-app.svg)](https://www.python.org)
 [![GitHub license](https://img.shields.io/github/license/rhasspy/rhasspy-hermes-app.svg)](https://github.com/rhasspy/rhasspy-hermes-app/blob/master/LICENSE)
 
-Helper library to create voice apps for [Rhasspy](https://rhasspy.readthedocs.io/) in Python using the [Hermes protocol](https://docs.snips.ai/reference/hermes).
+Helper library to create voice apps for [Rhasspy >=2.5](https://rhasspy.readthedocs.io/) in Python using the [Hermes protocol](https://docs.snips.ai/reference/hermes).
 
-Warning: Rhasspy Hermes App is currently alpha software, in a very early stage of its development. Anything may change at any time. The public API should not be considered stable. Consider this as a prototype.
+**Warning: Rhasspy Hermes App is currently alpha software, in a very early stage of its development. Anything may change at any time. The public API should not be considered stable. Consider this as a prototype.**
 
 ## Rationale
 
@@ -19,7 +19,7 @@ However, the result [still needs a lot of lines of code](time_app_direct.py). If
 from datetime import datetime
 import logging
 
-from rhasspyhermes_app import HermesApp
+from rhasspyhermes_app import EndSession, HermesApp
 
 _LOGGER = logging.getLogger("TimeApp")
 
@@ -29,7 +29,7 @@ app = HermesApp("TimeApp")
 @app.on_intent("GetTime")
 def get_time(intent):
     now = datetime.now().strftime("%H %M")
-    return app.EndSession(f"It's {now}")
+    return EndSession(f"It's {now}")
 
 
 app.run()
@@ -53,24 +53,35 @@ python3 time_app.py --help
 
 ## Installation
 
-You need Python 3.6 for Rhasspy Hermes App. For experimenting with and developing on the library, you should create a Python virtual environment with the `make venv` script (which also installs the dependencies) and activate it:
+You need Python 3.7 for Rhasspy Hermes App. For experimenting with and developing on the library, you should create a Python virtual environment with the `make venv` script (which also installs the dependencies) and activate it:
 
 ```shell
 make venv
 source .venv/bin/activate
 ```
 
-After this, you can run the demo app `time_ap.py` to try the library.
+After this, you can run the demo app `time_app.py` to try the library.
+
+## Documentation
+
+The documentation is still work in progress. You can generate the API documentation with:
+
+```shell
+make docs
+```
+
+After this, you can find the documentation in `docs/build/html`.
 
 ## TODO list
 
 * Add decorators to react to other Hermes messages.
 * Improve `mypy` coverage.
 * Write `pytest` tests.
-* Write documentation.
 * Release an installable Python package on PyPI when the API has been stabilised.
 * Let the app load its intents/slots/… from a file and re-train Rhasspy on installation/startup of the app.
 * Make multi-language apps possible, so the app developer can define example sentences in multiple languages and the app uses the language from your Rhasspy setup's profile.
+
+See also the repository's [issues](https://github.com/rhasspy/rhasspy-hermes-app/issues).
 
 ## License
 
