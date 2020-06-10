@@ -1,6 +1,7 @@
 # Rhasspy Hermes App library
 
 [![Continous Integration](https://github.com/rhasspy/rhasspy-hermes-app/workflows/Tests/badge.svg)](https://github.com/rhasspy/rhasspy-hermes-app/actions)
+[![Documentation Status](https://readthedocs.org/projects/rhasspy-hermes-app/badge/?version=latest)](https://rhasspy-hermes-app.readthedocs.io/en/latest/?badge=latest)
 [![PyPI package version](https://img.shields.io/pypi/v/rhasspy-hermes-app.svg)](https://pypi.org/project/rhasspy-hermes-app)
 [![Python versions](https://img.shields.io/pypi/pyversions/rhasspy-hermes-app.svg)](https://www.python.org)
 [![GitHub license](https://img.shields.io/github/license/rhasspy/rhasspy-hermes-app.svg)](https://github.com/rhasspy/rhasspy-hermes-app/blob/master/LICENSE)
