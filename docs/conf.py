@@ -32,9 +32,9 @@ author = "Koen Vervloesem"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
-    "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx_rtd_theme",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
 ]
