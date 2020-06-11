@@ -265,7 +265,7 @@ class HermesApp(HermesClient):
 
         return wrapper
 
-    def on_intent_not_recognized(self):
+    def on_intent_not_recognized(self, function):
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
@@ -281,46 +281,42 @@ class HermesApp(HermesClient):
             def notunderstood(intent_not_recognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
         """
-
-        def wrapper(function):
-            def wrapped(inr: NluIntentNotRecognized):
-                message = function(inr)
-                if isinstance(message, EndSession):
-                    if inr.session_id is not None:
-                        self.publish(
-                            DialogueEndSession(
-                                session_id=inr.session_id,
-                                site_id=inr.site_id,
-                                text=message.text,
-                                custom_data=message.custom_data,
-                            )
+        def wrapped(inr: NluIntentNotRecognized):
+            message = function(inr)
+            if isinstance(message, EndSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueEndSession(
+                            session_id=inr.session_id,
+                            site_id=inr.site_id,
+                            text=message.text,
+                            custom_data=message.custom_data,
                         )
-                    else:
-                        _LOGGER.error(
-                            "Cannot end session of intent not recognized message without session ID."
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot end session of intent not recognized message without session ID."
+                    )
+            elif isinstance(message, ContinueSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueContinueSession(
+                            session_id=inr.session_id,
+                            site_id=inr.site_id,
+                            text=message.text,
+                            intent_filter=message.intent_filter,
+                            custom_data=message.custom_data,
+                            send_intent_not_recognized=message.send_intent_not_recognized,
                         )
-                elif isinstance(message, ContinueSession):
-                    if inr.session_id is not None:
-                        self.publish(
-                            DialogueContinueSession(
-                                session_id=inr.session_id,
-                                site_id=inr.site_id,
-                                text=message.text,
-                                intent_filter=message.intent_filter,
-                                custom_data=message.custom_data,
-                                send_intent_not_recognized=message.send_intent_not_recognized,
-                            )
-                        )
-                    else:
-                        _LOGGER.error(
-                            "Cannot continue session of intent not recognized message without session ID."
-                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot continue session of intent not recognized message without session ID."
+                    )
 
-            self._callbacks_intent_not_recognized.append(wrapped)
+        self._callbacks_intent_not_recognized.append(wrapped)
 
-            return wrapped
-
-        return wrapper
+        return wrapped
 
     def on_topic(self, *topic_names: str):
         """Apply this decorator to a function that you want to act on a received raw MQTT message.
