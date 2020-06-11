@@ -281,6 +281,7 @@ class HermesApp(HermesClient):
             def notunderstood(intent_not_recognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
         """
+
         def wrapped(inr: NluIntentNotRecognized):
             message = function(inr)
             if isinstance(message, EndSession):
