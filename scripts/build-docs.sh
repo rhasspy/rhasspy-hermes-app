@@ -15,7 +15,8 @@ fi
 
 docs_dir="${src_dir}/docs"
 build_dir="${docs_dir}/build"
-sphinx-build -M html "${docs_dir}" "${build_dir}"
+sphinx-build -b linkcheck "${docs_dir}" "${build_dir}/linkcheck"
+sphinx-build -n "${docs_dir}" "${build_dir}"
 
 # -----------------------------------------------------------------------------
 

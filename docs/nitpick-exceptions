@@ -1,0 +1,11 @@
+# These references don't resolve correctly and should be ignored.
+
+# paho.mqtt
+py:class paho.mqtt.client.Client
+
+# rhasspyhermes
+# TODO: Remove these when rhasspyhermes documentation is on Read the Docs
+py:class rhasspyhermes.client.HermesClient
+py:class rhasspyhermes.nlu.NluIntent
+py:class rhasspyhermes.nlu.NluIntentNotRecognized
+py:class rhasspyhermes.wake.HotwordDetected

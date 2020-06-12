@@ -34,9 +34,9 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
-    "sphinx_rtd_theme",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -47,6 +47,15 @@ extensions = [
 # This pattern also affects html_static_path and html_extra_path.
 # exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# Build list of references to ignore when running in nit-picky mode (-n option).
+nitpick_ignore = []
+
+for line in open("nitpick-exceptions"):
+    if line.strip() == "" or line.startswith("#"):
+        continue
+    dtype, target = line.split(maxsplit=1)
+    target = target.strip()
+    nitpick_ignore.append((dtype, target))
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -75,6 +84,7 @@ todo_include_todos = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
+napoleon_use_param = True
 
 # -- Options for autodoc extension -------------------------------------------
 autodoc_default_options = {"show-inheritance": True}

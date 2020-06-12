@@ -20,7 +20,7 @@ class HermesApp(HermesClient):
     """A Rhasspy app using the Hermes protocol.
 
     Attributes:
-        args (:class:`argparse.Namespace`): Command-line arguments for the Hermes app.
+        args: Command-line arguments for the Hermes app.
 
     Example:
 
@@ -35,14 +35,14 @@ class HermesApp(HermesClient):
     ):
         """Initialize the Rhasspy Hermes app.
 
-        Args:
-            name (str): The name of this object.
+        Arguments:
+            name: The name of this object.
 
-            parser (:class:`argparse.ArgumentParser`, optional): An argument parser.
+            parser: An argument parser.
                 If the argument is not specified, the object creates an
                 argument parser itself.
 
-            mqtt_client (:class:`paho.mqtt.client.Client`, optional): An MQTT client. If the argument
+            mqtt_client: An MQTT client. If the argument
                 is not specified, the object creates an MQTT client itself.
         """
         if parser is None:
@@ -113,10 +113,10 @@ class HermesApp(HermesClient):
     async def on_raw_message(self, topic: str, payload: bytes):
         """This method handles messages from the MQTT broker.
 
-        Args:
-            topic (str): The topic of the received MQTT message.
+        Arguments:
+            topic: The topic of the received MQTT message.
 
-            payload (bytes): The payload of the received MQTT message.
+            payload: The payload of the received MQTT message.
 
         .. warning:: Don't override this method in your app. This is where all the magic happens in Rhasspy Hermes App.
         """
@@ -205,8 +205,8 @@ class HermesApp(HermesClient):
     def on_intent(self, *intent_names: str):
         """Apply this decorator to a function that you want to act on a received intent.
 
-        Args:
-            *intent_names (str): Names of the intents you want the function to act on.
+        Arguments:
+            intent_names: Names of the intents you want the function to act on.
 
         The function needs to have the following signature:
 
@@ -271,7 +271,7 @@ class HermesApp(HermesClient):
 
         The function needs to have the following signature:
 
-        function(intent_not_recognized: :class:`rhasspyhermes.nlu.IntentNotRecognized`)
+        function(intent_not_recognized: :class:`rhasspyhermes.nlu.NluIntentNotRecognized`)
 
         Example:
 
@@ -322,8 +322,8 @@ class HermesApp(HermesClient):
     def on_topic(self, *topic_names: str):
         """Apply this decorator to a function that you want to act on a received raw MQTT message.
 
-        Args:
-            *topic_names (str): The MQTT topics you want the function to act on.
+        Arguments:
+            topic_names: The MQTT topics you want the function to act on.
 
         The function needs to have the following signature:
 
@@ -443,12 +443,12 @@ class ContinueSession:
     """Helper class to continue the current session.
 
     Attributes:
-        text (str, optional): The text the TTS should say to start this additional request of the session.
-        intent_filter (List[str], optional): A list of intents names to restrict the NLU resolution on the
+        text: The text the TTS should say to start this additional request of the session.
+        intent_filter: A list of intents names to restrict the NLU resolution on the
             answer of this query.
-        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
+        custom_data: An update to the session's custom data. If not provided, the custom data
             will stay the same.
-        send_intent_not_recognized (bool): Indicates whether the dialogue manager should handle non recognized
+        send_intent_not_recognized: Indicates whether the dialogue manager should handle non recognized
             intents by itself or send them for the client to handle.
     """
 
@@ -463,8 +463,8 @@ class EndSession:
     """Helper class to end the current session.
 
     Attributes:
-        text (str, optional): The text the TTS should say to end the session.
-        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
+        text: The text the TTS should say to end the session.
+        custom_data: An update to the session's custom data. If not provided, the custom data
             will stay the same.
     """
 
@@ -477,8 +477,8 @@ class TopicData:
     """Helper class for topic subscription.
 
     Attributes:
-        topic (str): The MQTT topic.
-        data (Dict[str, str]): A dictionary holding extracted data for the given placeholder.
+        topic: The MQTT topic.
+        data: A dictionary holding extracted data for the given placeholder.
     """
 
     topic: str
