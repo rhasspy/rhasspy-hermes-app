@@ -69,16 +69,11 @@ class HermesApp(HermesClient):
         ] = []
 
         self._callbacks_intent: typing.Dict[
-            str,
-            typing.List[
-                typing.Callable[[NluIntent], typing.Union[ContinueSession, EndSession]]
-            ],
+            str, typing.List[typing.Callable[[NluIntent], None]],
         ] = {}
 
         self._callbacks_intent_not_recognized: typing.List[
-            typing.Callable[
-                [NluIntentNotRecognized], typing.Union[ContinueSession, EndSession]
-            ]
+            typing.Callable[[NluIntentNotRecognized], None]
         ] = []
 
         self._callbacks_topic: typing.Dict[
@@ -91,10 +86,10 @@ class HermesApp(HermesClient):
 
         self._additional_topic: typing.List[str] = []
 
-    def _subscribe_callbacks(self):
+    def _subscribe_callbacks(self) -> None:
         # Remove duplicate intent names
-        intent_names = list(set(self._callbacks_intent.keys()))
-        topics = [
+        intent_names: typing.List[str] = list(set(self._callbacks_intent.keys()))
+        topics: typing.List[str] = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
 
@@ -104,7 +99,7 @@ class HermesApp(HermesClient):
         if self._callbacks_intent_not_recognized:
             topics.append(NluIntentNotRecognized.topic())
 
-        topic_names = list(set(self._callbacks_topic.keys()))
+        topic_names: typing.List[str] = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
         topics.extend(self._additional_topic)
 
@@ -182,35 +177,47 @@ class HermesApp(HermesClient):
         except Exception:
             _LOGGER.exception("on_raw_message")
 
-    def on_hotword(self, function):
+    def on_hotword(
+        self, function: typing.Callable[[HotwordDetected], None]
+    ) -> typing.Callable[[HotwordDetected], None]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
-        The function needs to have the following signature:
-
-        function(hotword: :class:`rhasspyhermes.wake.HotwordDetected`)
+        The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
+        and doesn't have a return value.
 
         Example:
 
         .. code-block:: python
 
             @app.on_hotword
-            def wake(hotword):
+            def wake(hotword: HotwordDetected):
                 print(f"Hotword {hotword.model_id} detected on site {hotword.site_id}")
+
+        If a hotword has been detected, the ``wake`` function is called with the ``hotword`` argument.
+        This object holds information about the detected hotword.
         """
 
         self._callbacks_hotword.append(function)
 
         return function
 
-    def on_intent(self, *intent_names: str):
+    def on_intent(
+        self, *intent_names: str
+    ) -> typing.Callable[
+        [typing.Callable[[NluIntent], typing.Union["ContinueSession", "EndSession"]]],
+        typing.Callable[[NluIntent], None],
+    ]:
         """Apply this decorator to a function that you want to act on a received intent.
 
         Arguments:
             intent_names: Names of the intents you want the function to act on.
 
-        The function needs to have the following signature:
+        The decorated function has a :class:`rhasspyhermes.nlu.NluIntent` object as an argument
+        and needs to return a :class:`ContinueSession` or :class:`EndSession` object.
 
-        function(intent: :class:`rhasspyhermes.nlu.NluIntent`)
+        If the function returns a :class:`ContinueSession` object, the intent's session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the intent's session
+        is ended after saying the supplied text, or immediately when no text is supplied.
 
         Example:
 
@@ -219,10 +226,17 @@ class HermesApp(HermesClient):
             @app.on_intent("GetTime")
             def get_time(intent: NluIntent):
                 return EndSession("It's too late.")
+
+        If the intent with name GetTime has been detected, the ``get_time`` function is called
+        with the ``intent`` argument. This object holds information about the detected intent.
         """
 
-        def wrapper(function):
-            def wrapped(intent: NluIntent):
+        def wrapper(
+            function: typing.Callable[
+                [NluIntent], typing.Union[ContinueSession, EndSession]
+            ]
+        ) -> typing.Callable[[NluIntent], None]:
+            def wrapped(intent: NluIntent) -> None:
                 message = function(intent)
                 if isinstance(message, EndSession):
                     if intent.session_id is not None:
@@ -265,24 +279,37 @@ class HermesApp(HermesClient):
 
         return wrapper
 
-    def on_intent_not_recognized(self, function):
+    def on_intent_not_recognized(
+        self,
+        function: typing.Callable[
+            [NluIntentNotRecognized],
+            typing.Union["ContinueSession", "EndSession", None],
+        ],
+    ) -> typing.Callable[[NluIntentNotRecognized], None]:
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
-        The function needs to have the following signature:
+        The decorated function has a :class:`rhasspyhermes.nlu.NluIntentNotRecognized` object as an argument
+        and can return a :class:`ContinueSession` or :class:`EndSession` object or have no return value.
 
-        function(intent_not_recognized: :class:`rhasspyhermes.nlu.NluIntentNotRecognized`)
+        If the function returns a :class:`ContinueSession` object, the current session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the current session
+        is ended after saying the supplied text, or immediately when no text is supplied. If the function doesn't
+        have a return value, nothing is changed to the session.
 
         Example:
 
         .. code-block:: python
 
             @app.on_intent_not_recognized
-            def notunderstood(intent_not_recognized):
+            def not_understood(intent_not_recognized: NluIntentNotRecognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
+
+        If an intent hasn't been recognized, the ``not_understood`` function is called
+        with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapped(inr: NluIntentNotRecognized):
+        def wrapped(inr: NluIntentNotRecognized) -> None:
             message = function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
@@ -325,9 +352,8 @@ class HermesApp(HermesClient):
         Arguments:
             topic_names: The MQTT topics you want the function to act on.
 
-        The function needs to have the following signature:
-
-        function(data: :class:`TopicData`, payload: bytes)
+        The decorated function has a :class:`TopicData` and a :class:`bytes` object as its arguments.
+        The former holds data about the topic and the latter about the payload of the MQTT message.
 
         Example:
 
@@ -338,8 +364,8 @@ class HermesApp(HermesClient):
                 _LOGGER.debug("topic: %s, site_id: %s", data.topic, data.data.get("site_id"))
 
         .. note:: The topic names can contain MQTT wildcards (`+` and `#`) or templates (`{foobar}`).
-            In the latter case the value of the named template is available in the decorated function
-            as part of the ``data`` argument.
+            In the latter case, the value of the named template is available in the decorated function
+            as part of the :class:`TopicData` argument.
         """
 
         def wrapper(function):
