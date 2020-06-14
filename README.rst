@@ -10,14 +10,13 @@ Rhasspy Hermes App
    :target: https://rhasspy-hermes-app.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation status
 
-..
-  .. image:: https://img.shields.io/pypi/v/rhasspy-hermes-app.svg
-     :target: https://pypi.org/project/rhasspy-hermes-app
-     :alt: PyPI package version
+.. image:: https://img.shields.io/pypi/v/rhasspy-hermes-app.svg
+   :target: https://pypi.org/project/rhasspy-hermes-app
+   :alt: PyPI package version
 
-  .. image:: https://img.shields.io/pypi/pyversions/rhasspy-hermes-app.svg
-     :target: https://www.python.org
-     :alt: Supported Python versions
+.. image:: https://img.shields.io/pypi/pyversions/rhasspy-hermes-app.svg
+   :target: https://www.python.org
+   :alt: Supported Python versions
 
 .. image:: https://img.shields.io/github/license/rhasspy/rhasspy-hermes-app.svg
    :target: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/LICENSE

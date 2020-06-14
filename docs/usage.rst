@@ -25,7 +25,7 @@ By applying the app's :meth:`rhasspyhermes_app.HermesApp.on_intent` decorator to
 
 Try the example app `time_app.py`_ with the ``--help`` flag to see what settings you can use to start the app (mostly connection settings for the MQTT broker):
 
-.. code-block::
+.. code-block:: shell
 
   python3 time_app.py --help
 
