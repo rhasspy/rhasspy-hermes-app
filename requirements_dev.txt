@@ -2,6 +2,7 @@ Sphinx==3.0.4
 black==19.10b0
 coverage==5.0.4
 flake8==3.7.9
+lxml==4.5.1
 mypy==0.770
 pyinstaller==3.6
 pylint==2.4.4
@@ -10,5 +11,6 @@ pytest-asyncio==0.12.0
 pytest-cov==2.8.1
 pytest-mock==3.1.1
 pytest-sugar==0.9.3
+rstcheck==3.3.1
 sphinx_rtd_theme==0.4.3
 yamllint==1.21.0

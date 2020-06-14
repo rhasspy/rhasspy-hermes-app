@@ -16,6 +16,8 @@ fi
 flake8 "$@"
 pylint "$@"
 mypy "$@"
+mypy "$@" --txt-report .
+cat index.txt
 black --check .
 isort --check-only "$@"
 yamllint .

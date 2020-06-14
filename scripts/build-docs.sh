@@ -15,6 +15,7 @@ fi
 
 docs_dir="${src_dir}/docs"
 build_dir="${docs_dir}/build"
+rstcheck -r "${src_dir}/README.rst" "${docs_dir}"
 sphinx-build -b linkcheck "${docs_dir}" "${build_dir}/linkcheck"
 sphinx-build -n "${docs_dir}" "${build_dir}"
 
