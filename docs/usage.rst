@@ -49,7 +49,7 @@ Building an app on this library
 
 If the API of this library changes, your app possibly stops working when it updates to the newest release of Rhasspy Hermes App. Therefore, it’s best to define a specific version in your ``requirements.txt`` file, for instance:
 
-.. code-block:: none
+.. code-block::
 
   rhasspy-hermes-app==0.1.0
 
