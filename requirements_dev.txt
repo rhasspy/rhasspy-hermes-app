@@ -13,4 +13,5 @@ pytest-mock==3.1.1
 pytest-sugar==0.9.3
 rstcheck==3.3.1
 sphinx_rtd_theme==0.4.3
+sphinxcontrib-programoutput==0.16
 yamllint==1.21.0
