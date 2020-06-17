@@ -43,9 +43,11 @@ Installation
 
 A package can be installed from PyPI:
 
-.. code-block::
+.. code-block:: shell
 
   pip3 install rhasspy-hermes-app
+
+.. end-of-inclusion-in-index-rst
 
 *************
 Documentation
