@@ -74,7 +74,10 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Options for intersphinx extension ---------------------------------------
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "rhasspyhermes": ("https://rhasspy-hermes.readthedocs.io/en/latest/", None),
+}
 
 # -- Options for todo extension ----------------------------------------------
 
