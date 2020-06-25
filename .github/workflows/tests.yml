@@ -4,7 +4,7 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -35,3 +35,33 @@ jobs:
         run: make dist
       - name: Generate documentation
         run: make docs
+  tagging:
+    needs: [test]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - name: Bump version and push tag
+        uses: rhasspy/rhasspy-tag-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: bump_tag
+  publish:
+    needs: [tagging]
+    if: needs.tagging.outputs.new_tag != ''
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install Python dependencies
+        run: make install
+      - name: Make package
+        run: make dist
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.pypi_password }}
