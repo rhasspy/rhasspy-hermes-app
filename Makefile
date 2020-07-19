@@ -1,28 +1,20 @@
 SHELL := bash
-PACKAGE_NAME = $(shell basename "$$PWD")
-PYTHON_NAME = $(shell echo "$(PACKAGE_NAME)" | sed -e 's/-//' | sed -e 's/-/_/g')
-PYTHON_FILES = $(PYTHON_NAME)/*.py tests/*.py *.py docs/conf.py
-SHELL_FILES = bin/* debian/bin/*
-PIP_INSTALL ?= install
 
-.PHONY: reformat check dist venv test pyinstaller debian deploy docs
+.PHONY: reformat check dist sdist install docs test
 
-version := $(shell cat VERSION)
-architecture := $(shell dpkg-architecture | grep DEB_BUILD_ARCH= | sed 's/[^=]\+=//')
-
-all: venv
+all:
 
 # -----------------------------------------------------------------------------
 # Python
 # -----------------------------------------------------------------------------
 
 reformat:
-	scripts/format-code.sh $(PYTHON_FILES)
+	scripts/format-code.sh
 
 check:
-	scripts/check-code.sh $(PYTHON_FILES)
+	scripts/check-code.sh
 
-venv:
+install:
 	scripts/create-venv.sh
 
 dist: sdist
@@ -31,28 +23,7 @@ sdist:
 	python3 setup.py sdist
 
 test:
-	scripts/run-tests.sh $(PYTHON_NAME)
+	scripts/run-tests.sh
 
 docs:
 	scripts/build-docs.sh
-
-# -----------------------------------------------------------------------------
-# Docker
-# -----------------------------------------------------------------------------
-
-docker: pyinstaller
-	docker build . -t "rhasspy/$(PACKAGE_NAME):$(version)" -t "rhasspy/$(PACKAGE_NAME):latest"
-
-deploy:
-	echo "$$DOCKER_PASSWORD" | docker login -u "$$DOCKER_USERNAME" --password-stdin
-	docker push "rhasspy/$(PACKAGE_NAME):$(version)"
-
-# -----------------------------------------------------------------------------
-# Debian
-# -----------------------------------------------------------------------------
-
-pyinstaller:
-	scripts/build-pyinstaller.sh "${architecture}" "${version}"
-
-debian:
-	scripts/build-debian.sh "${architecture}" "${version}"
