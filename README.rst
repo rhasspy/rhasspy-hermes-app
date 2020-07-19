@@ -22,7 +22,7 @@ Rhasspy Hermes App
    :target: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/LICENSE
    :alt: License
 
-Rhasspy Hermes App is a helper library to create voice apps for Rhasspy_ (>=2.5) in Python using the `Hermes protocol`_
+Rhasspy Hermes App is a helper library to create voice apps for Rhasspy_ in Python using the `Hermes protocol`_
 
 .. _Rhasspy: https://rhasspy.readthedocs.io/en/latest/
 
