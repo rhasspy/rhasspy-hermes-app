@@ -9,7 +9,12 @@ from dataclasses import dataclass
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes.client import HermesClient
-from rhasspyhermes.dialogue import DialogueContinueSession, DialogueEndSession
+from rhasspyhermes.dialogue import (
+    DialogueContinueSession,
+    DialogueEndSession,
+    DialogueNotification,
+    DialogueStartSession,
+)
 from rhasspyhermes.nlu import NluIntent, NluIntentNotRecognized
 from rhasspyhermes.wake import HotwordDetected
 
@@ -462,6 +467,18 @@ class HermesApp(HermesClient):
             pass
         finally:
             self.mqtt_client.loop_stop()
+
+    def notify(self, text: str, site_id: str = "default"):
+        """Send a dialogue notification.
+
+        Use this to inform the user of something without expecting a response.
+
+        Arguments:
+            text: The text to say.
+            site_id: The ID of the site where the text should be said.
+        """
+        notification = DialogueNotification(text)
+        self.publish(DialogueStartSession(init=notification, site_id=site_id))
 
 
 @dataclass
