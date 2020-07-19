@@ -22,7 +22,7 @@ Unreleased
 
 Commits `since last release`_:
 
-.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v0.1.0...HEAD
+.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v0.2.0...HEAD
 
 Added
 =====
@@ -43,6 +43,17 @@ Security
 ========
 
 
+*********************
+`0.2.0`_ - 2020-07-19
+*********************
+
+.. _`0.2.0`: https://github.com/rhasspy/rhasspy-hermes-app/releases/tag/v0.2.0
+
+Added
+=====
+
+- Method :meth:`rhasspyhermes_app.HermesApp.notify` to send a dialogue notification. See `#10 <https://github.com/rhasspy/rhasspy-hermes-app/issues/10>`_.
+- Decorator :meth:`rhasspyhermes_app.HermesApp.on_dialogue_intent_not_recognized` to act when the dialogue manager failed to recognize an intent. See `#9 <https://github.com/rhasspy/rhasspy-hermes-app/issues/9>`_.
 
 *********************
 `0.1.0`_ - 2020-06-14
