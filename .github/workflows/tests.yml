@@ -33,8 +33,6 @@ jobs:
         run: make test
       - name: Make package
         run: make dist
-      - name: Generate documentation
-        run: make docs
   publish:
     needs: [test]
     if: github.ref == 'refs/heads/master'
