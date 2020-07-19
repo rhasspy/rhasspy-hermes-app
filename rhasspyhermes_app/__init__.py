@@ -12,6 +12,7 @@ from rhasspyhermes.client import HermesClient
 from rhasspyhermes.dialogue import (
     DialogueContinueSession,
     DialogueEndSession,
+    DialogueIntentNotRecognized,
     DialogueNotification,
     DialogueStartSession,
 )
@@ -81,6 +82,10 @@ class HermesApp(HermesClient):
             typing.Callable[[NluIntentNotRecognized], None]
         ] = []
 
+        self._callbacks_dialogue_intent_not_recognized: typing.List[
+            typing.Callable[[DialogueIntentNotRecognized], None]
+        ] = []
+
         self._callbacks_topic: typing.Dict[
             str, typing.List[typing.Callable[[TopicData, bytes], None]]
         ] = {}
@@ -103,6 +108,9 @@ class HermesApp(HermesClient):
 
         if self._callbacks_intent_not_recognized:
             topics.append(NluIntentNotRecognized.topic())
+
+        if self._callbacks_dialogue_intent_not_recognized:
+            topics.append(DialogueIntentNotRecognized.topic())
 
         topic_names: typing.List[str] = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
@@ -151,6 +159,18 @@ class HermesApp(HermesClient):
                     )
                     for function_inr in self._callbacks_intent_not_recognized:
                         function_inr(nlu_intent_not_recognized)
+                except KeyError as key:
+                    _LOGGER.error(
+                        "Missing key %s in JSON payload for %s: %s", key, topic, payload
+                    )
+            elif DialogueIntentNotRecognized.is_topic(topic):
+                # hermes/dialogueManager/intentNotRecognized
+                try:
+                    dialogue_intent_not_recognized = DialogueIntentNotRecognized.from_json(
+                        payload
+                    )
+                    for function_dinr in self._callbacks_dialogue_intent_not_recognized:
+                        function_dinr(dialogue_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -328,7 +348,7 @@ class HermesApp(HermesClient):
                     )
                 else:
                     _LOGGER.error(
-                        "Cannot end session of intent not recognized message without session ID."
+                        "Cannot end session of NLU intent not recognized message without session ID."
                     )
             elif isinstance(message, ContinueSession):
                 if inr.session_id is not None:
@@ -344,10 +364,78 @@ class HermesApp(HermesClient):
                     )
                 else:
                     _LOGGER.error(
-                        "Cannot continue session of intent not recognized message without session ID."
+                        "Cannot continue session of NLU intent not recognized message without session ID."
                     )
 
         self._callbacks_intent_not_recognized.append(wrapped)
+
+        return wrapped
+
+    def on_dialogue_intent_not_recognized(
+        self,
+        function: typing.Callable[
+            [DialogueIntentNotRecognized],
+            typing.Union["ContinueSession", "EndSession", None],
+        ],
+    ) -> typing.Callable[[DialogueIntentNotRecognized], None]:
+        """Apply this decorator to a function that you want to act when the dialogue manager
+        failed to recognize an intent and you requested to notify you of this event with the
+        `sendIntentNotRecognized` flag.
+
+        The decorated function has a :class:`rhasspyhermes.dialogue.DialogueIntentNotRecognized` object as an argument
+        and can return a :class:`ContinueSession` or :class:`EndSession` object or have no return value.
+
+        If the function returns a :class:`ContinueSession` object, the current session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the current session
+        is ended after saying the supplied text, or immediately when no text is supplied. If the function doesn't
+        have a return value, nothing is changed to the session.
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_dialogue_intent_not_recognized
+            def not_understood(intent_not_recognized: DialogueIntentNotRecognized):
+                print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
+
+        If an intent hasn't been recognized, the ``not_understood`` function is called
+        with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
+        """
+
+        def wrapped(inr: DialogueIntentNotRecognized) -> None:
+            message = function(inr)
+            if isinstance(message, EndSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueEndSession(
+                            session_id=inr.session_id,
+                            site_id=inr.site_id,
+                            text=message.text,
+                            custom_data=message.custom_data,
+                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot end session of dialogue intent not recognized message without session ID."
+                    )
+            elif isinstance(message, ContinueSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueContinueSession(
+                            session_id=inr.session_id,
+                            site_id=inr.site_id,
+                            text=message.text,
+                            intent_filter=message.intent_filter,
+                            custom_data=message.custom_data,
+                            send_intent_not_recognized=message.send_intent_not_recognized,
+                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot continue session of dialogue intent not recognized message without session ID."
+                    )
+
+        self._callbacks_dialogue_intent_not_recognized.append(wrapped)
 
         return wrapped
 
