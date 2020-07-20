@@ -473,9 +473,9 @@ class HermesApp(HermesClient):
         def wrapper(function):
             async def wrapped(data: TopicData, payload: bytes):
                 if asyncio.iscoroutinefunction(function):
-                    message = await function(data, payload)
+                    await function(data, payload)
                 else:
-                    message = function(data, payload)
+                    function(data, payload)
 
             replaced_topic_names = []
 
