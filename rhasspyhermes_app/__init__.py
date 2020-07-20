@@ -134,7 +134,7 @@ class HermesApp(HermesClient):
                 try:
                     hotword_detected = HotwordDetected.from_json(payload)
                     for function_h in self._callbacks_hotword:
-                        function_h(hotword_detected)
+                        await function_h(hotword_detected)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -146,7 +146,7 @@ class HermesApp(HermesClient):
                     intent_name = nlu_intent.intent.intent_name
                     if intent_name in self._callbacks_intent:
                         for function_i in self._callbacks_intent[intent_name]:
-                            function_i(nlu_intent)
+                            await function_i(nlu_intent)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -158,7 +158,7 @@ class HermesApp(HermesClient):
                         payload
                     )
                     for function_inr in self._callbacks_intent_not_recognized:
-                        function_inr(nlu_intent_not_recognized)
+                        await function_inr(nlu_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -170,7 +170,7 @@ class HermesApp(HermesClient):
                         payload
                     )
                     for function_dinr in self._callbacks_dialogue_intent_not_recognized:
-                        function_dinr(dialogue_intent_not_recognized)
+                        await function_dinr(dialogue_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -179,7 +179,7 @@ class HermesApp(HermesClient):
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
                     for function_1 in self._callbacks_topic[topic]:
-                        function_1(TopicData(topic, {}), payload)
+                        await function_1(TopicData(topic, {}), payload)
                         unexpected_topic = False
                 else:
                     for function_2 in self._callbacks_topic_regex:
@@ -261,8 +261,11 @@ class HermesApp(HermesClient):
                 [NluIntent], typing.Union[ContinueSession, EndSession]
             ]
         ) -> typing.Callable[[NluIntent], None]:
-            def wrapped(intent: NluIntent) -> None:
-                message = function(intent)
+            async def wrapped(intent: NluIntent) -> None:
+                if asyncio.iscoroutinefunction(function):
+                    message = await function(intent)
+                else:
+                    message = function(intent)
                 if isinstance(message, EndSession):
                     if intent.session_id is not None:
                         self.publish(
@@ -334,8 +337,11 @@ class HermesApp(HermesClient):
         with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapped(inr: NluIntentNotRecognized) -> None:
-            message = function(inr)
+        async def wrapped(inr: NluIntentNotRecognized) -> None:
+            if asyncio.iscoroutinefunction(function):
+                message = await function(inr)
+            else:
+                message = function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -402,8 +408,11 @@ class HermesApp(HermesClient):
         with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapped(inr: DialogueIntentNotRecognized) -> None:
-            message = function(inr)
+        async def wrapped(inr: DialogueIntentNotRecognized) -> None:
+            if asyncio.iscoroutinefunction(function):
+                message = await function(inr)
+            else:
+                message = function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -462,8 +471,11 @@ class HermesApp(HermesClient):
         """
 
         def wrapper(function):
-            def wrapped(data: TopicData, payload: bytes):
-                function(data, payload)
+            async def wrapped(data: TopicData, payload: bytes):
+                if asyncio.iscoroutinefunction(function):
+                    message = await function(data, payload)
+                else:
+                    message = function(data, payload)
 
             replaced_topic_names = []
 
