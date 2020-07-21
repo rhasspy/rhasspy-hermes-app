@@ -203,8 +203,8 @@ class HermesApp(HermesClient):
             _LOGGER.exception("on_raw_message")
 
     def on_hotword(
-        self, function: typing.Callable[[HotwordDetected], None]
-    ) -> typing.Callable[[HotwordDetected], None]:
+        self, function: typing.Callable[[HotwordDetected], typing.Union[None,typing.Awaitable[None]]]
+    ) -> typing.Callable[[HotwordDetected], typing.Union[None,typing.Awaitable[None]]]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
         The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
@@ -258,9 +258,10 @@ class HermesApp(HermesClient):
 
         def wrapper(
             function: typing.Callable[
-                [NluIntent], typing.Union[ContinueSession, EndSession]
+                [NluIntent], typing.Union[typing.Union[ContinueSession, EndSession], 
+                typing.Awaitable[typing.Union[ContinueSession, EndSession]]]
             ]
-        ) -> typing.Callable[[NluIntent], None]:
+        ) -> typing.Callable[[NluIntent], typing.Union[None,typing.Awaitable[None]]]:
             async def wrapped(intent: NluIntent) -> None:
                 if asyncio.iscoroutinefunction(function):
                     message = await function(intent)

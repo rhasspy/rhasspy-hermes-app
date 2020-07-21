@@ -31,6 +31,17 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 
 .. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/time_app.py
 
+*******
+Asyncio
+*******
+
+For Apps which are time intensive by e.g. using database queries or API calls, we recommend the use of asynchronos functions.
+These allow your code to handle multiple requests at the same time and therefore cutting down on precious runtime.
+You can use all decorators with asynchronos functions.
+
+Try the example app `async_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/async_advice_app.py
+
+
 ******************
 Other example apps
 ******************
