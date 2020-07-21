@@ -1,7 +1,7 @@
 Sphinx==3.0.4
 black==19.10b0
 coverage==5.0.4
-flake8==3.7.9
+flake8==3.8.3
 lxml==4.5.1
 mypy==0.770
 pyinstaller==3.6
