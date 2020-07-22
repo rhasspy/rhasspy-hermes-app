@@ -22,6 +22,53 @@ from rhasspyhermes.wake import HotwordDetected
 _LOGGER = logging.getLogger("HermesApp")
 
 
+@dataclass
+class ContinueSession:
+    """Helper class to continue the current session.
+
+    Attributes:
+        text: The text the TTS should say to start this additional request of the session.
+        intent_filter: A list of intents names to restrict the NLU resolution on the
+            answer of this query.
+        custom_data: An update to the session's custom data. If not provided, the custom data
+            will stay the same.
+        send_intent_not_recognized: Indicates whether the dialogue manager should handle non recognized
+            intents by itself or send them for the client to handle.
+    """
+
+    custom_data: typing.Optional[str] = None
+    text: typing.Optional[str] = None
+    intent_filter: typing.Optional[typing.List[str]] = None
+    send_intent_not_recognized: bool = False
+
+
+@dataclass
+class EndSession:
+    """Helper class to end the current session.
+
+    Attributes:
+        text: The text the TTS should say to end the session.
+        custom_data: An update to the session's custom data. If not provided, the custom data
+            will stay the same.
+    """
+
+    text: typing.Optional[str] = None
+    custom_data: typing.Optional[str] = None
+
+
+@dataclass
+class TopicData:
+    """Helper class for topic subscription.
+
+    Attributes:
+        topic: The MQTT topic.
+        data: A dictionary holding extracted data for the given placeholder.
+    """
+
+    topic: str
+    data: typing.Dict[str, str]
+
+
 class HermesApp(HermesClient):
     """A Rhasspy app using the Hermes protocol.
 
@@ -307,8 +354,7 @@ class HermesApp(HermesClient):
     def on_intent_not_recognized(
         self,
         function: typing.Callable[
-            [NluIntentNotRecognized],
-            typing.Union["ContinueSession", "EndSession", None],
+            [NluIntentNotRecognized], typing.Union[ContinueSession, EndSession, None],
         ],
     ) -> typing.Callable[[NluIntentNotRecognized], None]:
         """Apply this decorator to a function that you want to act when the NLU system
@@ -375,7 +421,7 @@ class HermesApp(HermesClient):
         self,
         function: typing.Callable[
             [DialogueIntentNotRecognized],
-            typing.Union["ContinueSession", "EndSession", None],
+            typing.Union[ContinueSession, EndSession, None],
         ],
     ) -> typing.Callable[[DialogueIntentNotRecognized], None]:
         """Apply this decorator to a function that you want to act when the dialogue manager
@@ -567,50 +613,3 @@ class HermesApp(HermesClient):
         """
         notification = DialogueNotification(text)
         self.publish(DialogueStartSession(init=notification, site_id=site_id))
-
-
-@dataclass
-class ContinueSession:
-    """Helper class to continue the current session.
-
-    Attributes:
-        text: The text the TTS should say to start this additional request of the session.
-        intent_filter: A list of intents names to restrict the NLU resolution on the
-            answer of this query.
-        custom_data: An update to the session's custom data. If not provided, the custom data
-            will stay the same.
-        send_intent_not_recognized: Indicates whether the dialogue manager should handle non recognized
-            intents by itself or send them for the client to handle.
-    """
-
-    custom_data: typing.Optional[str] = None
-    text: typing.Optional[str] = None
-    intent_filter: typing.Optional[typing.List[str]] = None
-    send_intent_not_recognized: bool = False
-
-
-@dataclass
-class EndSession:
-    """Helper class to end the current session.
-
-    Attributes:
-        text: The text the TTS should say to end the session.
-        custom_data: An update to the session's custom data. If not provided, the custom data
-            will stay the same.
-    """
-
-    text: typing.Optional[str] = None
-    custom_data: typing.Optional[str] = None
-
-
-@dataclass
-class TopicData:
-    """Helper class for topic subscription.
-
-    Attributes:
-        topic: The MQTT topic.
-        data: A dictionary holding extracted data for the given placeholder.
-    """
-
-    topic: str
-    data: typing.Dict[str, str]
