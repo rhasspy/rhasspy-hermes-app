@@ -5,13 +5,7 @@ py:class Callable[[rhasspyhermes.wake.HotwordDetected], None]
 py:class Callable[[Callable[[rhasspyhermes.nlu.NluIntent], Union[rhasspyhermes_app.ContinueSession, rhasspyhermes_app.EndSession]]], Callable[[rhasspyhermes.nlu.NluIntent], None]]
 py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], Union[ContinueSession, EndSession, None]]
 py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], None]
+py:class Callable[[rhasspyhermes.dialogue.DialogueIntentNotRecognized], None]
 
 # paho.mqtt
 py:class paho.mqtt.client.Client
-
-# rhasspyhermes
-# TODO: Remove these when rhasspyhermes documentation is on Read the Docs
-py:class rhasspyhermes.client.HermesClient
-py:class rhasspyhermes.nlu.NluIntent
-py:class rhasspyhermes.nlu.NluIntentNotRecognized
-py:class rhasspyhermes.wake.HotwordDetected
