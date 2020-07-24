@@ -3,7 +3,7 @@ import argparse
 import asyncio
 import logging
 import re
-import typing
+from typing import Union, Callable, List, Dict, Awaitable, Optional
 from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
@@ -36,8 +36,8 @@ class HermesApp(HermesClient):
     def __init__(
         self,
         name: str,
-        parser: typing.Optional[argparse.ArgumentParser] = None,
-        mqtt_client: typing.Optional[mqtt.Client] = None,
+        parser: Optional[argparse.ArgumentParser] = None,
+        mqtt_client: Optional[mqtt.Client] = None,
     ):
         """Initialize the Rhasspy Hermes app.
 
@@ -70,36 +70,36 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_hotword: typing.List[
-            typing.Callable[[HotwordDetected], None]
-        ] = []
+        self._callbacks_hotword: List[
+            Callable[[HotwordDetected], Union[Awaitable[None]]
+        ]] = []
 
-        self._callbacks_intent: typing.Dict[
-            str, typing.List[typing.Callable[[NluIntent], None]],
+        self._callbacks_intent: Dict[
+            str, List[Callable[[NluIntent], Awaitable[None]]],
         ] = {}
 
-        self._callbacks_intent_not_recognized: typing.List[
-            typing.Callable[[NluIntentNotRecognized], None]
+        self._callbacks_intent_not_recognized: List[
+            Callable[[NluIntentNotRecognized], Awaitable[None]]
         ] = []
 
-        self._callbacks_dialogue_intent_not_recognized: typing.List[
-            typing.Callable[[DialogueIntentNotRecognized], None]
+        self._callbacks_dialogue_intent_not_recognized: List[
+            Callable[[DialogueIntentNotRecognized], Awaitable[None]]
         ] = []
 
-        self._callbacks_topic: typing.Dict[
-            str, typing.List[typing.Callable[[TopicData, bytes], None]]
+        self._callbacks_topic: Dict[
+            str, List[Callable[[TopicData, bytes], Awaitable[None]]]
         ] = {}
 
-        self._callbacks_topic_regex: typing.List[
-            typing.Callable[[TopicData, bytes], None]
+        self._callbacks_topic_regex: List[
+            Callable[[TopicData, bytes], Awaitable[None]]
         ] = []
 
-        self._additional_topic: typing.List[str] = []
+        self._additional_topic: List[str] = []
 
     def _subscribe_callbacks(self) -> None:
         # Remove duplicate intent names
-        intent_names: typing.List[str] = list(set(self._callbacks_intent.keys()))
-        topics: typing.List[str] = [
+        intent_names: List[str] = list(set(self._callbacks_intent.keys()))
+        topics: List[str] = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
 
@@ -112,7 +112,7 @@ class HermesApp(HermesClient):
         if self._callbacks_dialogue_intent_not_recognized:
             topics.append(DialogueIntentNotRecognized.topic())
 
-        topic_names: typing.List[str] = list(set(self._callbacks_topic.keys()))
+        topic_names: List[str] = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
         topics.extend(self._additional_topic)
 
@@ -203,8 +203,8 @@ class HermesApp(HermesClient):
             _LOGGER.exception("on_raw_message")
 
     def on_hotword(
-        self, function: typing.Callable[[HotwordDetected], typing.Union[None, typing.Awaitable[None]]]
-    ) -> typing.Callable[[HotwordDetected], typing.Union[None, typing.Awaitable[None]]]:
+        self, function: Callable[[HotwordDetected], Union[None, Awaitable[None]]]
+    ) -> Callable[[HotwordDetected], Union[None, Awaitable[None]]]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
         The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
@@ -228,9 +228,9 @@ class HermesApp(HermesClient):
 
     def on_intent(
         self, *intent_names: str
-    ) -> typing.Callable[
-        [typing.Callable[[NluIntent], typing.Union["ContinueSession", "EndSession"]]],
-        typing.Callable[[NluIntent], None],
+    ) -> Callable[
+        [Callable[[NluIntent], Union["ContinueSession", "EndSession"]]],
+        Callable[[NluIntent], None],
     ]:
         """Apply this decorator to a function that you want to act on a received intent.
 
@@ -257,11 +257,11 @@ class HermesApp(HermesClient):
         """
 
         def wrapper(
-            function: typing.Callable[
-                [NluIntent], typing.Union[typing.Union[ContinueSession, EndSession],
-                                          typing.Awaitable[typing.Union[ContinueSession, EndSession]]]
+            function: Callable[
+                [NluIntent], Union[Union[ContinueSession, EndSession],
+                                          Awaitable[ContinueSession], Awaitable[EndSession]]
             ]
-        ) -> typing.Callable[[NluIntent], typing.Union[None, typing.Awaitable[None]]]:
+        ) -> Callable[[NluIntent], Union[None, Awaitable[None]]]:
             async def wrapped(intent: NluIntent) -> None:
                 if asyncio.iscoroutinefunction(function):
                     message = await function(intent)
@@ -310,11 +310,11 @@ class HermesApp(HermesClient):
 
     def on_intent_not_recognized(
         self,
-        function: typing.Callable[
+        function: Callable[
             [NluIntentNotRecognized],
-            typing.Union["ContinueSession", "EndSession", None],
+            Union["ContinueSession", "EndSession", None],
         ],
-    ) -> typing.Callable[[NluIntentNotRecognized], None]:
+    ) -> Callable[[NluIntentNotRecognized], None]:
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
@@ -380,11 +380,11 @@ class HermesApp(HermesClient):
 
     def on_dialogue_intent_not_recognized(
         self,
-        function: typing.Callable[
+        function: Callable[
             [DialogueIntentNotRecognized],
-            typing.Union["ContinueSession", "EndSession", None],
+            Union["ContinueSession", "EndSession", None],
         ],
-    ) -> typing.Callable[[DialogueIntentNotRecognized], None]:
+    ) -> Callable[[DialogueIntentNotRecognized], None]:
         """Apply this decorator to a function that you want to act when the dialogue manager
         failed to recognize an intent and you requested to notify you of this event with the
         `sendIntentNotRecognized` flag.
@@ -596,9 +596,9 @@ class ContinueSession:
             intents by itself or send them for the client to handle.
     """
 
-    custom_data: typing.Optional[str] = None
-    text: typing.Optional[str] = None
-    intent_filter: typing.Optional[typing.List[str]] = None
+    custom_data: Optional[str] = None
+    text: Optional[str] = None
+    intent_filter: Optional[List[str]] = None
     send_intent_not_recognized: bool = False
 
 
@@ -612,8 +612,8 @@ class EndSession:
             will stay the same.
     """
 
-    text: typing.Optional[str] = None
-    custom_data: typing.Optional[str] = None
+    text: Optional[str] = None
+    custom_data: Optional[str] = None
 
 
 @dataclass
@@ -626,4 +626,4 @@ class TopicData:
     """
 
     topic: str
-    data: typing.Dict[str, str]
+    data: Dict[str, str]
