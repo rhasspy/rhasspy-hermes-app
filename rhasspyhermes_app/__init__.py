@@ -117,9 +117,7 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_hotword: List[
-            Callable[[HotwordDetected], Awaitable[None]]
-        ] = []
+        self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
 
         self._callbacks_intent: Dict[
             str, List[Callable[[NluIntent], Awaitable[None]]],
@@ -276,7 +274,11 @@ class HermesApp(HermesClient):
     def on_intent(
         self, *intent_names: str
     ) -> Callable[
-        [Callable[[NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]]],
+        [
+            Callable[
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
+            ]
+        ],
         Callable[[NluIntent], Awaitable[None]],
     ]:
         """Apply this decorator to a function that you want to act on a received intent.
