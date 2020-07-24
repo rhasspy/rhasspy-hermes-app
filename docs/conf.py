@@ -92,3 +92,8 @@ napoleon_use_param = True
 
 # -- Options for autodoc extension -------------------------------------------
 autodoc_default_options = {"show-inheritance": True}
+
+# -- Options for programoutput extension -------------------------------------
+# This is a temporary hack
+# See https://github.com/NextThought/sphinxcontrib-programoutput/issues/37)
+programoutput_prompt_template = "$ python3 examples/time_app.py --help\n{output}"
