@@ -3,8 +3,8 @@ import argparse
 import asyncio
 import logging
 import re
-import typing
 from dataclasses import dataclass
+from typing import Awaitable, Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
@@ -36,9 +36,9 @@ class ContinueSession:
             intents by itself or send them for the client to handle.
     """
 
-    custom_data: typing.Optional[str] = None
-    text: typing.Optional[str] = None
-    intent_filter: typing.Optional[typing.List[str]] = None
+    custom_data: Optional[str] = None
+    text: Optional[str] = None
+    intent_filter: Optional[List[str]] = None
     send_intent_not_recognized: bool = False
 
 
@@ -52,8 +52,8 @@ class EndSession:
             will stay the same.
     """
 
-    text: typing.Optional[str] = None
-    custom_data: typing.Optional[str] = None
+    text: Optional[str] = None
+    custom_data: Optional[str] = None
 
 
 @dataclass
@@ -66,7 +66,7 @@ class TopicData:
     """
 
     topic: str
-    data: typing.Dict[str, str]
+    data: Dict[str, str]
 
 
 class HermesApp(HermesClient):
@@ -83,8 +83,8 @@ class HermesApp(HermesClient):
     def __init__(
         self,
         name: str,
-        parser: typing.Optional[argparse.ArgumentParser] = None,
-        mqtt_client: typing.Optional[mqtt.Client] = None,
+        parser: Optional[argparse.ArgumentParser] = None,
+        mqtt_client: Optional[mqtt.Client] = None,
     ):
         """Initialize the Rhasspy Hermes app.
 
@@ -117,36 +117,34 @@ class HermesApp(HermesClient):
         # Initialize HermesClient
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_hotword: typing.List[
-            typing.Callable[[HotwordDetected], None]
-        ] = []
+        self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
 
-        self._callbacks_intent: typing.Dict[
-            str, typing.List[typing.Callable[[NluIntent], None]],
+        self._callbacks_intent: Dict[
+            str, List[Callable[[NluIntent], Awaitable[None]]],
         ] = {}
 
-        self._callbacks_intent_not_recognized: typing.List[
-            typing.Callable[[NluIntentNotRecognized], None]
+        self._callbacks_intent_not_recognized: List[
+            Callable[[NluIntentNotRecognized], Awaitable[None]]
         ] = []
 
-        self._callbacks_dialogue_intent_not_recognized: typing.List[
-            typing.Callable[[DialogueIntentNotRecognized], None]
+        self._callbacks_dialogue_intent_not_recognized: List[
+            Callable[[DialogueIntentNotRecognized], Awaitable[None]]
         ] = []
 
-        self._callbacks_topic: typing.Dict[
-            str, typing.List[typing.Callable[[TopicData, bytes], None]]
+        self._callbacks_topic: Dict[
+            str, List[Callable[[TopicData, bytes], Awaitable[None]]]
         ] = {}
 
-        self._callbacks_topic_regex: typing.List[
-            typing.Callable[[TopicData, bytes], None]
+        self._callbacks_topic_regex: List[
+            Callable[[TopicData, bytes], Awaitable[None]]
         ] = []
 
-        self._additional_topic: typing.List[str] = []
+        self._additional_topic: List[str] = []
 
     def _subscribe_callbacks(self) -> None:
         # Remove duplicate intent names
-        intent_names: typing.List[str] = list(set(self._callbacks_intent.keys()))
-        topics: typing.List[str] = [
+        intent_names: List[str] = list(set(self._callbacks_intent.keys()))
+        topics: List[str] = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
 
@@ -159,7 +157,7 @@ class HermesApp(HermesClient):
         if self._callbacks_dialogue_intent_not_recognized:
             topics.append(DialogueIntentNotRecognized.topic())
 
-        topic_names: typing.List[str] = list(set(self._callbacks_topic.keys()))
+        topic_names: List[str] = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
         topics.extend(self._additional_topic)
 
@@ -181,7 +179,7 @@ class HermesApp(HermesClient):
                 try:
                     hotword_detected = HotwordDetected.from_json(payload)
                     for function_h in self._callbacks_hotword:
-                        function_h(hotword_detected)
+                        await function_h(hotword_detected)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -193,7 +191,7 @@ class HermesApp(HermesClient):
                     intent_name = nlu_intent.intent.intent_name
                     if intent_name in self._callbacks_intent:
                         for function_i in self._callbacks_intent[intent_name]:
-                            function_i(nlu_intent)
+                            await function_i(nlu_intent)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -205,7 +203,7 @@ class HermesApp(HermesClient):
                         payload
                     )
                     for function_inr in self._callbacks_intent_not_recognized:
-                        function_inr(nlu_intent_not_recognized)
+                        await function_inr(nlu_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -217,7 +215,7 @@ class HermesApp(HermesClient):
                         payload
                     )
                     for function_dinr in self._callbacks_dialogue_intent_not_recognized:
-                        function_dinr(dialogue_intent_not_recognized)
+                        await function_dinr(dialogue_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -226,7 +224,7 @@ class HermesApp(HermesClient):
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
                     for function_1 in self._callbacks_topic[topic]:
-                        function_1(TopicData(topic, {}), payload)
+                        await function_1(TopicData(topic, {}), payload)
                         unexpected_topic = False
                 else:
                     for function_2 in self._callbacks_topic_regex:
@@ -250,8 +248,8 @@ class HermesApp(HermesClient):
             _LOGGER.exception("on_raw_message")
 
     def on_hotword(
-        self, function: typing.Callable[[HotwordDetected], None]
-    ) -> typing.Callable[[HotwordDetected], None]:
+        self, function: Callable[[HotwordDetected], Awaitable[None]]
+    ) -> Callable[[HotwordDetected], Awaitable[None]]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
         The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
@@ -275,9 +273,13 @@ class HermesApp(HermesClient):
 
     def on_intent(
         self, *intent_names: str
-    ) -> typing.Callable[
-        [typing.Callable[[NluIntent], typing.Union["ContinueSession", "EndSession"]]],
-        typing.Callable[[NluIntent], None],
+    ) -> Callable[
+        [
+            Callable[
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
+            ]
+        ],
+        Callable[[NluIntent], Awaitable[None]],
     ]:
         """Apply this decorator to a function that you want to act on a received intent.
 
@@ -304,12 +306,12 @@ class HermesApp(HermesClient):
         """
 
         def wrapper(
-            function: typing.Callable[
-                [NluIntent], typing.Union[ContinueSession, EndSession]
+            function: Callable[
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
             ]
-        ) -> typing.Callable[[NluIntent], None]:
-            def wrapped(intent: NluIntent) -> None:
-                message = function(intent)
+        ) -> Callable[[NluIntent], Awaitable[None]]:
+            async def wrapped(intent: NluIntent) -> None:
+                message = await function(intent)
                 if isinstance(message, EndSession):
                     if intent.session_id is not None:
                         self.publish(
@@ -353,10 +355,11 @@ class HermesApp(HermesClient):
 
     def on_intent_not_recognized(
         self,
-        function: typing.Callable[
-            [NluIntentNotRecognized], typing.Union[ContinueSession, EndSession, None],
+        function: Callable[
+            [NluIntentNotRecognized],
+            Union[Awaitable[ContinueSession], Awaitable[EndSession], Awaitable[None]],
         ],
-    ) -> typing.Callable[[NluIntentNotRecognized], None]:
+    ) -> Callable[[NluIntentNotRecognized], Awaitable[None]]:
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
@@ -380,8 +383,8 @@ class HermesApp(HermesClient):
         with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapped(inr: NluIntentNotRecognized) -> None:
-            message = function(inr)
+        async def wrapped(inr: NluIntentNotRecognized) -> None:
+            message = await function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -419,11 +422,11 @@ class HermesApp(HermesClient):
 
     def on_dialogue_intent_not_recognized(
         self,
-        function: typing.Callable[
+        function: Callable[
             [DialogueIntentNotRecognized],
-            typing.Union[ContinueSession, EndSession, None],
+            Union[Awaitable[ContinueSession], Awaitable[EndSession], Awaitable[None]],
         ],
-    ) -> typing.Callable[[DialogueIntentNotRecognized], None]:
+    ) -> Callable[[DialogueIntentNotRecognized], Awaitable[None]]:
         """Apply this decorator to a function that you want to act when the dialogue manager
         failed to recognize an intent and you requested to notify you of this event with the
         `sendIntentNotRecognized` flag.
@@ -448,8 +451,8 @@ class HermesApp(HermesClient):
         with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapped(inr: DialogueIntentNotRecognized) -> None:
-            message = function(inr)
+        async def wrapped(inr: DialogueIntentNotRecognized) -> None:
+            message = await function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -508,8 +511,8 @@ class HermesApp(HermesClient):
         """
 
         def wrapper(function):
-            def wrapped(data: TopicData, payload: bytes):
-                function(data, payload)
+            async def wrapped(data: TopicData, payload: bytes):
+                await function(data, payload)
 
             replaced_topic_names = []
 

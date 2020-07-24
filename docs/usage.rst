@@ -22,6 +22,7 @@ Ignoring the import lines and the logger, what this code does is:
 * running the app.
 
 By applying the app's :meth:`rhasspyhermes_app.HermesApp.on_intent` decorator to the function, this function will be called whenever the app receives an intent with the name "GetTime".
+You can apply any decorator to asynchronos functions aswell to further improve runtime.
 
 Try the example app `time_app.py`_ with the ``--help`` flag to see what settings you can use to start the app (mostly connection settings for the MQTT broker):
 
@@ -29,6 +30,17 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
    :cwd: ..
 
 .. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/time_app.py
+
+*******
+Asyncio
+*******
+
+For Apps which are time intensive by e.g. using database queries or API calls, we recommend the use of asynchronos functions.
+These allow your code to handle multiple requests at the same time and therefore cutting down on precious runtime.
+You can use all decorators with asynchronos functions.
+
+Try the example app `async_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/async_advice_app.py
+
 
 ******************
 Other example apps
@@ -50,7 +62,7 @@ If the API of this library changes, your app possibly stops working when it upda
 
 .. code-block::
 
-  rhasspy-hermes-app==0.1.0
+  rhasspy-hermes-app==0.2.0
 
 This way your app keeps working when the Rhasspy Hermes App adds incompatible changes in a new version.
 
