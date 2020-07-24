@@ -77,7 +77,7 @@ class HermesApp(HermesClient):
 
     Example:
 
-    .. literalinclude:: ../time_app.py
+    .. literalinclude:: ../examples/time_app.py
     """
 
     def __init__(

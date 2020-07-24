@@ -13,7 +13,7 @@ Reacting to an intent
 
 This example app reacts to the default "GetTime" intent that comes with Rhasspy's installation by telling you the current time:
 
-.. literalinclude:: ../time_app.py
+.. literalinclude:: ../examples/time_app.py
 
 Ignoring the import lines and the logger, what this code does is:
 
@@ -28,7 +28,7 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 .. command-output:: python3 time_app.py --help
    :cwd: ..
 
-.. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/time_app.py
+.. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app.py
 
 *******
 Asyncio
@@ -41,7 +41,7 @@ These allow your code to handle multiple requests at the same time and therefore
 
 Try the example app `async_advice_app.py`_.
 
-.. _`acync_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/async_advice_app.py
+.. _`async_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/async_advice_app.py
 
 
 ******************
@@ -53,8 +53,8 @@ The GitHub repository has a couple of other example apps showing the library's f
 - `raw_topic_app.py`_
 - `raw_topic_list_app.py`_
 
-.. _`raw_topic_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/raw_topic_app.py
-.. _`raw_topic_list_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/raw_topic_list_app.py
+.. _`raw_topic_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/raw_topic_app.py
+.. _`raw_topic_list_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/raw_topic_list_app.py
 
 *******************************
 Building an app on this library

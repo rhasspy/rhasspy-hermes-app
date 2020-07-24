@@ -11,10 +11,10 @@ Rationale
 
 However, the result `still needs a lot of lines of code`_. If you want to have control over the finer details of the Rhasspy Hermes library, this is fine. But if you just want to create a simple voice app that tells you the time, it should be easier. This is where the Rhasspy Hermes App library comes in. Its lets you write code such as `the following`_:
 
-.. _`still needs a lot of lines of code`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/time_app_direct.py
+.. _`still needs a lot of lines of code`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app_direct.py
 
-.. _`the following`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/time_app.py
+.. _`the following`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app.py
 
-.. literalinclude:: ../time_app.py
+.. literalinclude:: ../examples/time_app.py
 
 In fact, the code using Rhasspy Hermes directly and the one using Rhasspy Hermes App are doing exactly the same. Thanks to the extra abstraction layer of the Rhasspy Hermes App library, a few lines of code are enough to start a whole machinery behind the scenes.
