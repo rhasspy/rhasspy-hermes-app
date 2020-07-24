@@ -71,8 +71,8 @@ class HermesApp(HermesClient):
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
         self._callbacks_hotword: List[
-            Callable[[HotwordDetected], Union[Awaitable[None]]
-        ]] = []
+            Callable[[HotwordDetected], Awaitable[None]]
+        ] = []
 
         self._callbacks_intent: Dict[
             str, List[Callable[[NluIntent], Awaitable[None]]],
@@ -203,8 +203,8 @@ class HermesApp(HermesClient):
             _LOGGER.exception("on_raw_message")
 
     def on_hotword(
-        self, function: Callable[[HotwordDetected], Union[None, Awaitable[None]]]
-    ) -> Callable[[HotwordDetected], Union[None, Awaitable[None]]]:
+        self, function: Callable[[HotwordDetected], Awaitable[None]]
+    ) -> Callable[[HotwordDetected], Awaitable[None]]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
         The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
@@ -229,8 +229,8 @@ class HermesApp(HermesClient):
     def on_intent(
         self, *intent_names: str
     ) -> Callable[
-        [Callable[[NluIntent], Union["ContinueSession", "EndSession"]]],
-        Callable[[NluIntent], None],
+        [Callable[[NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]]],
+        Callable[[NluIntent], Awaitable[None]],
     ]:
         """Apply this decorator to a function that you want to act on a received intent.
 
@@ -258,15 +258,11 @@ class HermesApp(HermesClient):
 
         def wrapper(
             function: Callable[
-                [NluIntent], Union[Union[ContinueSession, EndSession],
-                                          Awaitable[ContinueSession], Awaitable[EndSession]]
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
             ]
-        ) -> Callable[[NluIntent], Union[None, Awaitable[None]]]:
+        ) -> Callable[[NluIntent], Awaitable[None]]:
             async def wrapped(intent: NluIntent) -> None:
-                if asyncio.iscoroutinefunction(function):
-                    message = await function(intent)
-                else:
-                    message = function(intent)
+                message = await function(intent)
                 if isinstance(message, EndSession):
                     if intent.session_id is not None:
                         self.publish(
@@ -312,9 +308,9 @@ class HermesApp(HermesClient):
         self,
         function: Callable[
             [NluIntentNotRecognized],
-            Union["ContinueSession", "EndSession", None],
+            Union[Awaitable["ContinueSession"], Awaitable["EndSession"], Awaitable[None]],
         ],
-    ) -> Callable[[NluIntentNotRecognized], None]:
+    ) -> Callable[[NluIntentNotRecognized], Awaitable[None]]:
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
@@ -339,10 +335,7 @@ class HermesApp(HermesClient):
         """
 
         async def wrapped(inr: NluIntentNotRecognized) -> None:
-            if asyncio.iscoroutinefunction(function):
-                message = await function(inr)
-            else:
-                message = function(inr)
+            message = await function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -382,9 +375,9 @@ class HermesApp(HermesClient):
         self,
         function: Callable[
             [DialogueIntentNotRecognized],
-            Union["ContinueSession", "EndSession", None],
+            Union[Awaitable["ContinueSession"], Awaitable["EndSession"], Awaitable[None]],
         ],
-    ) -> Callable[[DialogueIntentNotRecognized], None]:
+    ) -> Callable[[DialogueIntentNotRecognized], Awaitable[None]]:
         """Apply this decorator to a function that you want to act when the dialogue manager
         failed to recognize an intent and you requested to notify you of this event with the
         `sendIntentNotRecognized` flag.
@@ -410,10 +403,7 @@ class HermesApp(HermesClient):
         """
 
         async def wrapped(inr: DialogueIntentNotRecognized) -> None:
-            if asyncio.iscoroutinefunction(function):
-                message = await function(inr)
-            else:
-                message = function(inr)
+            message = await function(inr)
             if isinstance(message, EndSession):
                 if inr.session_id is not None:
                     self.publish(
@@ -473,10 +463,7 @@ class HermesApp(HermesClient):
 
         def wrapper(function):
             async def wrapped(data: TopicData, payload: bytes):
-                if asyncio.iscoroutinefunction(function):
-                    await function(data, payload)
-                else:
-                    function(data, payload)
+                await function(data, payload)
 
             replaced_topic_names = []
 
