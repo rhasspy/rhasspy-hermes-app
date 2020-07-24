@@ -3,8 +3,8 @@ import argparse
 import asyncio
 import logging
 import re
-from typing import Union, Callable, List, Dict, Awaitable, Optional
 from dataclasses import dataclass
+from typing import Awaitable, Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
