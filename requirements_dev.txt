@@ -4,7 +4,6 @@ coverage==5.2
 flake8==3.8.3
 lxml==4.5.2
 mypy==0.782
-pyinstaller==3.6
 pylint==2.5.3
 pytest==5.4.3
 pytest-asyncio==0.12.0
