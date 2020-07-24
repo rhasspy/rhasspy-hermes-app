@@ -18,11 +18,10 @@ This example app reacts to the default "GetTime" intent that comes with Rhasspy'
 Ignoring the import lines and the logger, what this code does is:
 
 * creating a :class:`rhasspyhermes_app.HermesApp` object;
-* defining a function ``get_time`` that ends a session by telling the time;
+* defining an async function ``get_time`` that ends a session by telling the time;
 * running the app.
 
 By applying the app's :meth:`rhasspyhermes_app.HermesApp.on_intent` decorator to the function, this function will be called whenever the app receives an intent with the name "GetTime".
-You can apply any decorator to asynchronos functions aswell to further improve runtime.
 
 Try the example app `time_app.py`_ with the ``--help`` flag to see what settings you can use to start the app (mostly connection settings for the MQTT broker):
 
@@ -35,11 +34,14 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 Asyncio
 *******
 
-For Apps which are time intensive by e.g. using database queries or API calls, we recommend the use of asynchronos functions.
-These allow your code to handle multiple requests at the same time and therefore cutting down on precious runtime.
-You can use all decorators with asynchronos functions.
+Every function that you decorate with Rhasspy Hermes App should be defined with the `async` keyword. However, you don't have to use the async functionality.
 
-Try the example app `async_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/async_advice_app.py
+For apps which are time intensive by e.g. using database queries or API calls, we recommend the use of asynchronous functions.
+These allow your code to handle multiple requests at the same time and therefore cutting down on precious runtime.
+
+Try the example app `async_advice_app.py`_.
+
+.. _`acync_advice_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/async_advice_app.py
 
 
 ******************

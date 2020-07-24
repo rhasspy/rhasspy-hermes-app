@@ -12,7 +12,7 @@ app = HermesApp("TimeApp")
 
 
 @app.on_intent("GetTime")
-def get_time(intent: NluIntent):
+async def get_time(intent: NluIntent):
     """Tell the time."""
     now = datetime.now().strftime("%H %M")
     return EndSession(f"It's {now}")

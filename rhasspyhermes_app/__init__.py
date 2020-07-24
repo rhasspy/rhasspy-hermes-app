@@ -260,7 +260,7 @@ class HermesApp(HermesClient):
         .. code-block:: python
 
             @app.on_hotword
-            def wake(hotword: HotwordDetected):
+            async def wake(hotword: HotwordDetected):
                 print(f"Hotword {hotword.model_id} detected on site {hotword.site_id}")
 
         If a hotword has been detected, the ``wake`` function is called with the ``hotword`` argument.
@@ -298,7 +298,7 @@ class HermesApp(HermesClient):
         .. code-block:: python
 
             @app.on_intent("GetTime")
-            def get_time(intent: NluIntent):
+            async def get_time(intent: NluIntent):
                 return EndSession("It's too late.")
 
         If the intent with name GetTime has been detected, the ``get_time`` function is called
@@ -376,7 +376,7 @@ class HermesApp(HermesClient):
         .. code-block:: python
 
             @app.on_intent_not_recognized
-            def not_understood(intent_not_recognized: NluIntentNotRecognized):
+            async def not_understood(intent_not_recognized: NluIntentNotRecognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
 
         If an intent hasn't been recognized, the ``not_understood`` function is called
@@ -444,7 +444,7 @@ class HermesApp(HermesClient):
         .. code-block:: python
 
             @app.on_dialogue_intent_not_recognized
-            def not_understood(intent_not_recognized: DialogueIntentNotRecognized):
+            async def not_understood(intent_not_recognized: DialogueIntentNotRecognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
 
         If an intent hasn't been recognized, the ``not_understood`` function is called
@@ -502,7 +502,7 @@ class HermesApp(HermesClient):
         .. code-block:: python
 
             @app.on_topic("hermes/+/{site_id}/playBytes/#")
-            def test_topic1(data: TopicData, payload: bytes):
+            async def test_topic1(data: TopicData, payload: bytes):
                 _LOGGER.debug("topic: %s, site_id: %s", data.topic, data.data.get("site_id"))
 
         .. note:: The topic names can contain MQTT wildcards (`+` and `#`) or templates (`{foobar}`).

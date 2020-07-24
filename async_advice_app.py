@@ -18,7 +18,7 @@ in any way whatsoever, can be responsible for your use of the api endpoint.
 """
 URL = 'https://api.advicslip.com/advice'
 
-#@app.on_intent("GetAdvice")
+@app.on_intent("GetAdvice")
 async def get_advice(intent: NluIntent):
     """Giving life advice."""
     try:

@@ -14,7 +14,7 @@ app = HermesApp("RawTopicApp")
     "hermes/tts/+",
     "hermes/+/{site_id}/playBytes/#",
 )
-def test_topic1(data: TopicData, payload: bytes):
+async def test_topic1(data: TopicData, payload: bytes):
     """Receive MQTT messages for the subscribed topics."""
     if "hotword" in data.topic:
         _LOGGER.debug("topic: %s, hotword: %s", data.topic, data.data.get("hotword"))

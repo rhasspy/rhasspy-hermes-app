@@ -1,11 +1,12 @@
 # These references don't resolve correctly and should be ignored.
 
 # typing
-py:class Callable[[rhasspyhermes.wake.HotwordDetected], None]
-py:class Callable[[Callable[[rhasspyhermes.nlu.NluIntent], Union[rhasspyhermes_app.ContinueSession, rhasspyhermes_app.EndSession]]], Callable[[rhasspyhermes.nlu.NluIntent], None]]
-py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], Union[ContinueSession, EndSession, None]]
-py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], None]
-py:class Callable[[rhasspyhermes.dialogue.DialogueIntentNotRecognized], None]
+py:class Callable[[rhasspyhermes.wake.HotwordDetected], Awaitable[None]]
+py:class Callable[[Callable[[rhasspyhermes.nlu.NluIntent], Union[Awaitable[rhasspyhermes_app.ContinueSession], Awaitable[rhasspyhermes_app.EndSession]]]], Callable[[rhasspyhermes.nlu.NluIntent], Awaitable[None]]]
+py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], Union[Awaitable[rhasspyhermes_app.ContinueSession], Awaitable[rhasspyhermes_app.EndSession], Awaitable[None]]]
+py:class Callable[[rhasspyhermes.nlu.NluIntentNotRecognized], Awaitable[None]]
+py:class Callable[[rhasspyhermes.dialogue.DialogueIntentNotRecognized], Union[Awaitable[rhasspyhermes_app.ContinueSession], Awaitable[rhasspyhermes_app.EndSession], Awaitable[None]]]
+py:class Callable[[rhasspyhermes.dialogue.DialogueIntentNotRecognized], Awaitable[None]]
 
 # paho.mqtt
 py:class paho.mqtt.client.Client
