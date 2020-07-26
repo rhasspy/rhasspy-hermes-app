@@ -22,7 +22,7 @@ Unreleased
 
 Commits `since last release`_:
 
-.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v0.2.0...HEAD
+.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.0.0...HEAD
 
 Added
 =====
@@ -42,6 +42,16 @@ Fixed
 Security
 ========
 
+*********************
+`1.0.0`_ - 2020-07-26
+*********************
+
+.. _`1.0.0`: https://github.com/rhasspy/rhasspy-hermes-app/releases/tag/v1.0.0
+
+Changed
+=======
+
+- All decorators of this library now only work with ``async`` functions. Pull request `#16 <https://github.com/rhasspy/rhasspy-hermes-app/pull/16>`_ by `@JonahKr <https://github.com/JonahKr>`_. Existing code should only add the ``async`` keyword before the function definition to keep the code valid. See :doc:`usage` for some examples.
 
 *********************
 `0.2.0`_ - 2020-07-19

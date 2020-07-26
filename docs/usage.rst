@@ -35,7 +35,7 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 Asyncio
 *******
 
-Every function that you decorate with Rhasspy Hermes App should be defined with the `async` keyword. However, you don't have to use the async functionality.
+Every function that you decorate with Rhasspy Hermes App should be defined with the ``async`` keyword. However, you don't have to use the async functionality.
 
 For apps which are time intensive by e.g. using database queries or API calls, we recommend the use of asynchronous functions.
 These allow your code to handle multiple requests at the same time and therefore cutting down on precious runtime.
