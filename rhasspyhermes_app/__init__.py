@@ -85,6 +85,7 @@ class HermesApp(HermesClient):
         name: str,
         parser: Optional[argparse.ArgumentParser] = None,
         mqtt_client: Optional[mqtt.Client] = None,
+        **kwargs
     ):
         """Initialize the Rhasspy Hermes app.
 
@@ -105,6 +106,11 @@ class HermesApp(HermesClient):
 
         # Parse command-line arguments
         self.args = parser.parse_args()
+
+        # Option to set all parameters as keyword arguments
+        args_dict = vars(self.args)
+        for key, value in kwargs.items():
+            args_dict[key] = value
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
