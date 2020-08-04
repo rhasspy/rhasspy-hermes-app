@@ -31,6 +31,9 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 
 .. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app.py
 
+You can pass all the settings as keyword arguments inside the constructor aswell:
+:meth:`HermesApp("ExampleApp", host = "192.168.178.123", port = 12183)`
+
 *******
 Asyncio
 *******
@@ -65,7 +68,7 @@ If the API of this library changes, your app possibly stops working when it upda
 
 .. code-block::
 
-  rhasspy-hermes-app==0.2.0
+  rhasspy-hermes-app==1.0.0
 
 This way your app keeps working when the Rhasspy Hermes App adds incompatible changes in a new version.
 
