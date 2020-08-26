@@ -108,7 +108,8 @@ class HermesApp(HermesClient):
         self.args = parser.parse_args()
 
         # Option to set all parameters as keyword arguments !!! CLI arguments are rated higher priority
-        args_dict = {**kwargs, **vars(self.args)}
+        args_dict = vars(self.args)
+        args_dict = {**kwargs, **args_dict}
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
