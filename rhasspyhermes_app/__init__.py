@@ -109,7 +109,9 @@ class HermesApp(HermesClient):
         args_dict = vars(parser.parse_args())
         default_args_dict = vars(parser.parse_args([]))
         # Remove the arguments which have their default values
-        non_default_args_dict = dict(set(args_dict.items()) - set(default_args_dict.items()))
+        non_default_args_dict = dict(
+            set(args_dict.items()) - set(default_args_dict.items())
+        )
         # Let the non-default arguments take precedence over the object arguments
         args = {**kwargs, **non_default_args_dict}
         # Merge these back with the original arguments, taking into account precedence
@@ -124,6 +126,7 @@ class HermesApp(HermesClient):
             mqtt_client = mqtt.Client()
 
         # Initialize HermesClient
+        # pylint: disable=no-member
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
         self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
@@ -602,6 +605,7 @@ class HermesApp(HermesClient):
         self._subscribe_callbacks()
 
         # Try to connect
+        # pylint: disable=no-member
         _LOGGER.debug("Connecting to %s:%s", self.args.host, self.args.port)
         hermes_cli.connect(self.mqtt_client, self.args)
         self.mqtt_client.loop_start()

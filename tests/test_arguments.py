@@ -3,7 +3,6 @@ import argparse
 import pytest
 import sys
 
-import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes_app import HermesApp
 
 
@@ -72,26 +71,23 @@ def test_if_cli_arguments_overwrite_init_arguments(mocker):
             "--host",
             "rhasspy.home",
             "--port",
-            "8883",
-            "--tls",
+            "1883",
             "--username",
             "rhasspy-hermes-app",
             "--password",
-            "test",
+            "test"
         ],
     )
     app = HermesApp(
         "Test arguments in init",
         mqtt_client=mocker.MagicMock(),
         host="rhasspy.local",
-        port=1883,
-        tls=False,
+        port=8883,
         username="rhasspy-hermes-app-test",
         password="covfefe",
     )
 
     assert app.args.host == "rhasspy.home"
-    assert app.args.port == 8883
-    assert app.args.tls == True
+    assert app.args.port == 1883
     assert app.args.username == "rhasspy-hermes-app"
     assert app.args.password == "test"
