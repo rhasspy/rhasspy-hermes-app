@@ -105,11 +105,15 @@ class HermesApp(HermesClient):
         hermes_cli.add_hermes_args(parser)
 
         # Parse command-line arguments
-        self.args = parser.parse_args()
-
-        # Option to set all parameters as keyword arguments !!! CLI arguments are rated higher priority
-        args_dict = vars(self.args)
-        args_dict = {**kwargs, **args_dict}
+        # Command-line arguments take precedence over the arguments of the HermesApp.__init__
+        args_dict = vars(parser.parse_args())
+        default_args_dict = vars(parser.parse_args([]))
+        # Remove the arguments which have their default values
+        non_default_args_dict = dict(set(args_dict.items()) - set(default_args_dict.items()))
+        # Let the non-default arguments take precedence over the object arguments
+        args = {**kwargs, **non_default_args_dict}
+        # Merge these back with the original arguments, taking into account precedence
+        self.args = argparse.Namespace(**{**args_dict, **args})
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
