@@ -137,7 +137,8 @@ class HermesApp(HermesClient):
         self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
 
         self._callbacks_intent: Dict[
-            str, List[Callable[[NluIntent], Awaitable[None]]],
+            str,
+            List[Callable[[NluIntent], Awaitable[None]]],
         ] = {}
 
         self._callbacks_intent_not_recognized: List[
@@ -228,8 +229,8 @@ class HermesApp(HermesClient):
             elif DialogueIntentNotRecognized.is_topic(topic):
                 # hermes/dialogueManager/intentNotRecognized
                 try:
-                    dialogue_intent_not_recognized = DialogueIntentNotRecognized.from_json(
-                        payload
+                    dialogue_intent_not_recognized = (
+                        DialogueIntentNotRecognized.from_json(payload)
                     )
                     for function_dinr in self._callbacks_dialogue_intent_not_recognized:
                         await function_dinr(dialogue_intent_not_recognized)
