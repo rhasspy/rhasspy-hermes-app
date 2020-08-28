@@ -99,6 +99,10 @@ class HermesApp(HermesClient):
 
             mqtt_client: An MQTT client. If the argument
                 is not specified, the object creates an MQTT client itself.
+
+            **kwargs: Other arguments. This supports the same arguments as the command-line
+                arguments, such has ``host`` and ``port``. Arguments specified by the user
+                on the command line have precedence over arguments passed as ``**kwargs``.
         """
         if parser is None:
             parser = argparse.ArgumentParser(prog=name)

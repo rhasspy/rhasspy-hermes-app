@@ -22,7 +22,7 @@ Unreleased
 
 Commits `since last release`_:
 
-.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.0.0...HEAD
+.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.1.0...HEAD
 
 Added
 =====
@@ -41,6 +41,17 @@ Fixed
 
 Security
 ========
+
+*********************
+`1.1.0`_ - 2020-08-28
+*********************
+
+.. _`1.1.0`: https://github.com/rhasspy/rhasspy-hermes-app/releases/tag/v1.1.0
+
+Changed
+=======
+
+- Command-line arguments can now also be passed as keyword arguments to the constructor of a :class:`rhasspyhermes_app.HermesApp` object. Note that arguments on the command line have precedence. Pull request `#37 <https://github.com/rhasspy/rhasspy-hermes-app/pull/37>`_ by `@JonahKr <https://github.com/JonahKr>`_ with help from `@maxbachmann <https://github.com/maxbachmann>`_.
 
 *********************
 `1.0.0`_ - 2020-07-26

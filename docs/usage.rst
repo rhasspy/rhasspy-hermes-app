@@ -32,7 +32,8 @@ Try the example app `time_app.py`_ with the ``--help`` flag to see what settings
 .. _`time_app.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app.py
 
 You can pass all the settings as keyword arguments inside the constructor aswell:
-:meth:`HermesApp("ExampleApp", host = "192.168.178.123", port = 12183)`
+:meth:`rhasspyhermes_app.HermesApp("ExampleApp", host="192.168.178.123", port=12183)`. Note that arguments passed on the
+command line have precedence over arguments passed to the constructor.
 
 *******
 Asyncio
