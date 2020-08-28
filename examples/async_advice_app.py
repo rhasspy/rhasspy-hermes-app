@@ -16,7 +16,7 @@ This is JUST an example!
 None of the authors, contributors, administrators, or anyone else connected with Rhasspy_Hermes_App,
 in any way whatsoever, can be responsible for your use of the api endpoint.
 """
-URL = 'https://api.advicslip.com/advice'
+URL = 'https://api.adviceslip.com/advice'
 
 @app.on_intent("GetAdvice")
 async def get_advice(intent: NluIntent):

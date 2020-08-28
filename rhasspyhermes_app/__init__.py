@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import logging
 import re
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Dict, List, Optional, Union
 
@@ -85,6 +86,7 @@ class HermesApp(HermesClient):
         name: str,
         parser: Optional[argparse.ArgumentParser] = None,
         mqtt_client: Optional[mqtt.Client] = None,
+        **kwargs
     ):
         """Initialize the Rhasspy Hermes app.
 
@@ -103,8 +105,18 @@ class HermesApp(HermesClient):
         # Add default arguments
         hermes_cli.add_hermes_args(parser)
 
-        # Parse command-line arguments
-        self.args = parser.parse_args()
+        # overwrite argument defaults inside parser with argparse.SUPPRESS
+        # so arguments that are not provided get ignored
+        suppress_parser = deepcopy(parser)
+        for action in suppress_parser._actions:
+            action.default = argparse.SUPPRESS
+
+        supplied_args = vars(suppress_parser.parse_args())
+        default_args = vars(parser.parse_args([]))
+
+        # Command-line arguments take precedence over the arguments of the HermesApp.__init__
+        args = {**default_args, **kwargs, **supplied_args}
+        self.args = argparse.Namespace(**args)
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
@@ -115,6 +127,7 @@ class HermesApp(HermesClient):
             mqtt_client = mqtt.Client()
 
         # Initialize HermesClient
+        # pylint: disable=no-member
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
         self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
@@ -593,6 +606,7 @@ class HermesApp(HermesClient):
         self._subscribe_callbacks()
 
         # Try to connect
+        # pylint: disable=no-member
         _LOGGER.debug("Connecting to %s:%s", self.args.host, self.args.port)
         hermes_cli.connect(self.mqtt_client, self.args)
         self.mqtt_client.loop_start()
