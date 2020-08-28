@@ -7,9 +7,9 @@ from rhasspyhermes.wake import HotwordDetected
 
 from rhasspyhermes_app import HermesApp
 
-HOTWORD_TOPIC = f"hermes/hotword/test/detected"
+HOTWORD_TOPIC = "hermes/hotword/test/detected"
 HOTWORD = HotwordDetected("test_model")
-HOTWORD_TOPIC2 = f"hermes/hotword/test2/detected"
+HOTWORD_TOPIC2 = "hermes/hotword/test2/detected"
 HOTWORD2 = HotwordDetected("test_model2")
 
 _LOOP = asyncio.get_event_loop()

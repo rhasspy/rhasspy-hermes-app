@@ -7,7 +7,7 @@ from rhasspyhermes.nlu import NluIntentNotRecognized
 
 from rhasspyhermes_app import HermesApp
 
-INR_TOPIC = f"hermes/nlu/intentNotRecognized"
+INR_TOPIC = "hermes/nlu/intentNotRecognized"
 INR = NluIntentNotRecognized(input="covfefe")
 
 _LOOP = asyncio.get_event_loop()

@@ -1,7 +1,6 @@
 """Tests for HermesApp arguments."""
+# pylint: disable=no-member
 import argparse
-import pytest
-import sys
 
 from rhasspyhermes_app import HermesApp
 
@@ -12,7 +11,7 @@ def test_default_arguments(mocker):
 
     assert app.args.host == "localhost"
     assert app.args.port == 1883
-    assert app.args.tls == False
+    assert app.args.tls is False
     assert app.args.username is None
     assert app.args.password is None
 
@@ -38,7 +37,7 @@ def test_arguments_from_cli(mocker):
 
     assert app.args.host == "rhasspy.home"
     assert app.args.port == 8883
-    assert app.args.tls == True
+    assert app.args.tls is True
     assert app.args.username == "rhasspy-hermes-app"
     assert app.args.password == "test"
 
@@ -57,7 +56,7 @@ def test_arguments_in_init(mocker):
 
     assert app.args.host == "rhasspy.home"
     assert app.args.port == 8883
-    assert app.args.tls == True
+    assert app.args.tls is True
     assert app.args.username == "rhasspy-hermes-app"
     assert app.args.password == "test"
 
@@ -133,4 +132,4 @@ def test_if_cli_arguments_overwrite_init_arguments_with_argument_parser(mocker):
     assert app.args.username == "rhasspy-hermes-app"
     assert app.args.password == "test"
     assert app.args.test_argument == "foobar"
-    assert app.args.test_flag == True
+    assert app.args.test_flag is True
