@@ -108,7 +108,7 @@ class HermesApp(HermesClient):
         # overwrite argument defaults inside parser with argparse.SUPPRESS
         # so arguments that are not provided get ignored
         suppress_parser = deepcopy(parser)
-        for action in vars(suppress_parser)["_actions"]:
+        for action in suppress_parser._actions:
             action.default = argparse.SUPPRESS
 
         supplied_args = vars(suppress_parser.parse_args())
