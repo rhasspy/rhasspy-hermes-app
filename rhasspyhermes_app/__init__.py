@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import logging
 import re
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Dict, List, Optional, Union
 
@@ -104,18 +105,18 @@ class HermesApp(HermesClient):
         # Add default arguments
         hermes_cli.add_hermes_args(parser)
 
-        # Parse command-line arguments
+        # overwrite argument defaults inside parser with argparse.SUPPRESS
+        # so arguments that are not provided get ignored
+        suppress_parser = deepcopy(parser)
+        for action in vars(suppress_parser)["_actions"]:
+            action.default = argparse.SUPPRESS
+
+        supplied_args = vars(suppress_parser.parse_args())
+        default_args = vars(parser.parse_args([]))
+
         # Command-line arguments take precedence over the arguments of the HermesApp.__init__
-        args_dict = vars(parser.parse_args())
-        default_args_dict = vars(parser.parse_args([]))
-        # Remove the arguments which have their default values
-        non_default_args_dict = dict(
-            set(args_dict.items()) - set(default_args_dict.items())
-        )
-        # Let the non-default arguments take precedence over the object arguments
-        args = {**kwargs, **non_default_args_dict}
-        # Merge these back with the original arguments, taking into account precedence
-        self.args = argparse.Namespace(**{**args_dict, **args})
+        args = {**default_args, **kwargs, **supplied_args}
+        self.args = argparse.Namespace(**args)
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
