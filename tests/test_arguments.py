@@ -75,7 +75,7 @@ def test_if_cli_arguments_overwrite_init_arguments(mocker):
             "--username",
             "rhasspy-hermes-app",
             "--password",
-            "test"
+            "test",
         ],
     )
     app = HermesApp(
@@ -91,3 +91,46 @@ def test_if_cli_arguments_overwrite_init_arguments(mocker):
     assert app.args.port == 1883
     assert app.args.username == "rhasspy-hermes-app"
     assert app.args.password == "test"
+
+
+def test_if_cli_arguments_overwrite_init_arguments_with_argument_parser(mocker):
+    """Test whether arguments from the command line overwrite arguments to a HermesApp object
+    if the user supplies their own ArgumentParser object."""
+    mocker.patch(
+        "sys.argv",
+        [
+            "rhasspy-hermes-app-test",
+            "--host",
+            "rhasspy.home",
+            "--port",
+            "1883",
+            "--username",
+            "rhasspy-hermes-app",
+            "--password",
+            "test",
+            "--test-argument",
+            "foobar",
+            "--test-flag",
+        ],
+    )
+    parser = argparse.ArgumentParser(prog="rhasspy-hermes-app-test")
+    parser.add_argument("--test-argument", default="foo")
+    parser.add_argument("--test-flag", action="store_true")
+
+    app = HermesApp(
+        "Test arguments in init",
+        parser=parser,
+        mqtt_client=mocker.MagicMock(),
+        host="rhasspy.local",
+        port=8883,
+        username="rhasspy-hermes-app-test",
+        password="covfefe",
+        test_argument="bar",
+    )
+
+    assert app.args.host == "rhasspy.home"
+    assert app.args.port == 1883
+    assert app.args.username == "rhasspy-hermes-app"
+    assert app.args.password == "test"
+    assert app.args.test_argument == "foobar"
+    assert app.args.test_flag == True
