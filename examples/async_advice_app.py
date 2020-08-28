@@ -1,8 +1,8 @@
 """Example app to react to an intent to tell you the time."""
-import logging
 import json
-import aiohttp
+import logging
 
+import aiohttp  # pylint: disable=import-error
 from rhasspyhermes.nlu import NluIntent
 
 from rhasspyhermes_app import EndSession, HermesApp
@@ -16,7 +16,8 @@ This is JUST an example!
 None of the authors, contributors, administrators, or anyone else connected with Rhasspy_Hermes_App,
 in any way whatsoever, can be responsible for your use of the api endpoint.
 """
-URL = 'https://api.adviceslip.com/advice'
+URL = "https://api.adviceslip.com/advice"
+
 
 @app.on_intent("GetAdvice")
 async def get_advice(intent: NluIntent):
@@ -26,11 +27,14 @@ async def get_advice(intent: NluIntent):
             async with session.get(URL) as response:
                 data = await response.read()
                 message = json.loads(data)
-                return EndSession(str(message['slip']['advice']))
+                return EndSession(str(message["slip"]["advice"]))
     except aiohttp.ClientConnectionError:
         _LOGGER.exception("No Connection could be established.")
-    except:  # pylint: disable=W0702
+    except:  # noqa: E722 pylint: disable=bare-except
         _LOGGER.exception("An Exception occured")
-    return EndSession("Sadly i cannot connect to my spring my whisdom. Maybe try later again.")
+    return EndSession(
+        "Sadly i cannot connect to my spring my whisdom. Maybe try later again."
+    )
+
 
 app.run()

@@ -15,6 +15,7 @@ dir_name="$(basename "${src_dir}")"
 python_name="$(echo "${dir_name}" | sed -e 's/-//' | sed -e 's/-/_/g')"
 python_files=(
     "${src_dir}/${python_name}"/*.py
+    "${src_dir}"/examples/*.py
     "${src_dir}"/tests/*.py
     "${src_dir}/setup.py"
 )
