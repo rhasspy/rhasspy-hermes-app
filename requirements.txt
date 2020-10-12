@@ -1,1 +1,1 @@
-rhasspy-hermes==0.4.1
+rhasspy-hermes==0.4.2
