@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = "Rhasspy Hermes App"
 # pylint: disable=redefined-builtin
-copyright = "2020, Koen Vervloesem"
+copyright = "2020-2021, Koen Vervloesem"
 author = "Koen Vervloesem"
 
 
