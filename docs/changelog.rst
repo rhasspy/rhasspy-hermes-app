@@ -22,7 +22,7 @@ Unreleased
 
 Commits `since last release`_:
 
-.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.1.0...HEAD
+.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.1.1...HEAD
 
 Added
 =====
@@ -41,6 +41,17 @@ Fixed
 
 Security
 ========
+
+*********************
+`1.1.1`_ - 2021-01-13
+*********************
+
+.. _`1.1.1`: https://github.com/rhasspy/rhasspy-hermes-app/releases/tag/v1.1.1
+
+Changed
+=======
+
+- Updated dependencies. The most important one is the upgrade to rhasspy-hermes 0.5.0.
 
 *********************
 `1.1.0`_ - 2020-08-28
