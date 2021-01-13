@@ -335,7 +335,6 @@ class HermesApp(HermesClient):
                         self.publish(
                             DialogueEndSession(
                                 session_id=intent.session_id,
-                                site_id=intent.site_id,
                                 text=message.text,
                                 custom_data=message.custom_data,
                             )
@@ -349,7 +348,6 @@ class HermesApp(HermesClient):
                         self.publish(
                             DialogueContinueSession(
                                 session_id=intent.session_id,
-                                site_id=intent.site_id,
                                 text=message.text,
                                 intent_filter=message.intent_filter,
                                 custom_data=message.custom_data,
@@ -408,7 +406,6 @@ class HermesApp(HermesClient):
                     self.publish(
                         DialogueEndSession(
                             session_id=inr.session_id,
-                            site_id=inr.site_id,
                             text=message.text,
                             custom_data=message.custom_data,
                         )
@@ -422,7 +419,6 @@ class HermesApp(HermesClient):
                     self.publish(
                         DialogueContinueSession(
                             session_id=inr.session_id,
-                            site_id=inr.site_id,
                             text=message.text,
                             intent_filter=message.intent_filter,
                             custom_data=message.custom_data,
@@ -476,7 +472,6 @@ class HermesApp(HermesClient):
                     self.publish(
                         DialogueEndSession(
                             session_id=inr.session_id,
-                            site_id=inr.site_id,
                             text=message.text,
                             custom_data=message.custom_data,
                         )
@@ -490,7 +485,6 @@ class HermesApp(HermesClient):
                     self.publish(
                         DialogueContinueSession(
                             session_id=inr.session_id,
-                            site_id=inr.site_id,
                             text=message.text,
                             intent_filter=message.intent_filter,
                             custom_data=message.custom_data,

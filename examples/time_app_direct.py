@@ -35,7 +35,6 @@ class TimeApp(HermesClient):
                         self.publish(
                             DialogueEndSession(
                                 session_id=nlu_intent.session_id,
-                                site_id=nlu_intent.site_id,
                                 text=f"It's {now}",
                             )
                         )
