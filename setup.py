@@ -4,7 +4,7 @@ import os
 import setuptools
 
 this_dir = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(this_dir, "README.md"), "r") as readme_file:
+with open(os.path.join(this_dir, "README.rst"), "r") as readme_file:
     long_description = readme_file.read()
 
 with open(os.path.join(this_dir, "requirements.txt"), "r") as requirements_file:
@@ -23,12 +23,15 @@ setuptools.setup(
     package_data={"rhasspyhermes_app": ["py.typed"]},
     install_requires=requirements,
     classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
-        "License :: OSI Approved :: MIT License",
+        "Topic :: Software Development :: Libraries",
     ],
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     python_requires=">=3.7",
 )

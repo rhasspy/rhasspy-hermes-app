@@ -1,35 +1,63 @@
 ---
 name: Tests
 
-on: [push, pull_request]
+on: [push, pull_request]  # yamllint disable-line rule:truthy
 
 jobs:
-  build:
+  test:
 
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, macos-latest]
+        os: [ubuntu-20.04, macos-latest]
         python-version: [3.7, 3.8]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2.3.4
       - name: Install dependencies on macOS
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install fakeroot dpkg coreutils
           brew link --force gettext
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2.2.1
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install Python dependencies
-        run: make venv
+        run: make install
       - name: Check code
         run: make check
       - name: Test code
         run: make test
       - name: Make package
         run: make dist
+  publish:
+    needs: [test]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.3.4
+      - name: Bump version and push tag
+        uses: rhasspy/rhasspy-tag-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: bump_tag
+      - name: Set up Python 3.8
+        if: steps.bump_tag.outputs.new_tag
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.8
+      - name: Install Python dependencies
+        if: steps.bump_tag.outputs.new_tag
+        run: make install
+      - name: Make package
+        if: steps.bump_tag.outputs.new_tag
+        run: make dist
+      - name: Publish package to PyPI
+        if: steps.bump_tag.outputs.new_tag
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.pypi_password }}

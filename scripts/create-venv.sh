@@ -9,8 +9,6 @@ fi
 this_dir="$( cd "$( dirname "$0" )" && pwd )"
 src_dir="$(realpath "${this_dir}/..")"
 
-python_name="$(basename "${src_dir}" | sed -e 's/-//' | sed -e 's/-/_/g')"
-
 # -----------------------------------------------------------------------------
 
 venv="${src_dir}/.venv"
@@ -18,10 +16,12 @@ download="${src_dir}/download"
 
 # -----------------------------------------------------------------------------
 
+: "${PYTHON=python3}"
+
 # Create virtual environment
 echo "Creating virtual environment at ${venv}"
 rm -rf "${venv}"
-python3 -m venv "${venv}"
+"${PYTHON}" -m venv "${venv}"
 source "${venv}/bin/activate"
 
 # Install Python dependencies

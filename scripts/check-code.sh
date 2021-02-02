@@ -11,14 +11,24 @@ if [[ -d "${venv}" ]]; then
     source "${venv}/bin/activate"
 fi
 
+dir_name="$(basename "${src_dir}")"
+python_name="$(echo "${dir_name}" | sed -e 's/-//' | sed -e 's/-/_/g')"
+python_files=(
+    "${src_dir}/${python_name}"/*.py
+    "${src_dir}"/examples/*.py
+    "${src_dir}"/tests/*.py
+    "${src_dir}/setup.py"
+)
+
 # -----------------------------------------------------------------------------
 
-flake8 "$@"
-pylint "$@"
-mypy "$@"
-black --check .
-isort --check-only "$@"
-yamllint .
+flake8 "${python_files[@]}"
+pylint "${python_files[@]}"
+mypy "${python_files[@]}" --txt-report .
+cat index.txt
+black --check "${python_files[@]}"
+isort --check-only "${python_files[@]}"
+yamllint "${src_dir}"
 
 # -----------------------------------------------------------------------------
 

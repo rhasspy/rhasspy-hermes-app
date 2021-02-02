@@ -3,55 +3,124 @@ import argparse
 import asyncio
 import logging
 import re
-import typing
+from copy import deepcopy
 from dataclasses import dataclass
+from typing import Awaitable, Callable, Dict, List, Optional, Union
 
 import paho.mqtt.client as mqtt
 import rhasspyhermes.cli as hermes_cli
 from rhasspyhermes.client import HermesClient
-from rhasspyhermes.dialogue import DialogueContinueSession, DialogueEndSession
+from rhasspyhermes.dialogue import (
+    DialogueContinueSession,
+    DialogueEndSession,
+    DialogueIntentNotRecognized,
+    DialogueNotification,
+    DialogueStartSession,
+)
 from rhasspyhermes.nlu import NluIntent, NluIntentNotRecognized
 from rhasspyhermes.wake import HotwordDetected
 
 _LOGGER = logging.getLogger("HermesApp")
 
 
+@dataclass
+class ContinueSession:
+    """Helper class to continue the current session.
+
+    Attributes:
+        text: The text the TTS should say to start this additional request of the session.
+        intent_filter: A list of intents names to restrict the NLU resolution on the
+            answer of this query.
+        custom_data: An update to the session's custom data. If not provided, the custom data
+            will stay the same.
+        send_intent_not_recognized: Indicates whether the dialogue manager should handle non recognized
+            intents by itself or send them for the client to handle.
+    """
+
+    custom_data: Optional[str] = None
+    text: Optional[str] = None
+    intent_filter: Optional[List[str]] = None
+    send_intent_not_recognized: bool = False
+
+
+@dataclass
+class EndSession:
+    """Helper class to end the current session.
+
+    Attributes:
+        text: The text the TTS should say to end the session.
+        custom_data: An update to the session's custom data. If not provided, the custom data
+            will stay the same.
+    """
+
+    text: Optional[str] = None
+    custom_data: Optional[str] = None
+
+
+@dataclass
+class TopicData:
+    """Helper class for topic subscription.
+
+    Attributes:
+        topic: The MQTT topic.
+        data: A dictionary holding extracted data for the given placeholder.
+    """
+
+    topic: str
+    data: Dict[str, str]
+
+
 class HermesApp(HermesClient):
     """A Rhasspy app using the Hermes protocol.
 
     Attributes:
-        args (:class:`argparse.Namespace`): Command-line arguments for the Hermes app.
+        args: Command-line arguments for the Hermes app.
 
     Example:
 
-    .. literalinclude:: ../time_app.py
+    .. literalinclude:: ../examples/time_app.py
     """
 
     def __init__(
         self,
         name: str,
-        parser: typing.Optional[argparse.ArgumentParser] = None,
-        mqtt_client: typing.Optional[mqtt.Client] = None,
+        parser: Optional[argparse.ArgumentParser] = None,
+        mqtt_client: Optional[mqtt.Client] = None,
+        **kwargs
     ):
         """Initialize the Rhasspy Hermes app.
 
-        Args:
-            name (str): The name of this object.
+        Arguments:
+            name: The name of this object.
 
-            parser (:class:`argparse.ArgumentParser`, optional): An argument parser.
+            parser: An argument parser.
                 If the argument is not specified, the object creates an
                 argument parser itself.
 
-            mqtt_client (:class:`paho.mqtt.client.Client`, optional): An MQTT client. If the argument
+            mqtt_client: An MQTT client. If the argument
                 is not specified, the object creates an MQTT client itself.
+
+            **kwargs: Other arguments. This supports the same arguments as the command-line
+                arguments, such has ``host`` and ``port``. Arguments specified by the user
+                on the command line have precedence over arguments passed as ``**kwargs``.
         """
         if parser is None:
             parser = argparse.ArgumentParser(prog=name)
         # Add default arguments
         hermes_cli.add_hermes_args(parser)
 
-        # Parse command-line arguments
-        self.args = parser.parse_args()
+        # overwrite argument defaults inside parser with argparse.SUPPRESS
+        # so arguments that are not provided get ignored
+        suppress_parser = deepcopy(parser)
+        for action in suppress_parser._actions:
+            action.default = argparse.SUPPRESS
+
+        supplied_args = vars(suppress_parser.parse_args())
+        default_args = vars(parser.parse_args([]))
+
+        # Command-line arguments take precedence over the arguments of the HermesApp.__init__
+        args = {**default_args, **kwargs, **supplied_args}
+        self.args = argparse.Namespace(**args)
 
         # Set up logging
         hermes_cli.setup_logging(self.args)
@@ -62,39 +131,38 @@ class HermesApp(HermesClient):
             mqtt_client = mqtt.Client()
 
         # Initialize HermesClient
+        # pylint: disable=no-member
         super().__init__(name, mqtt_client, site_ids=self.args.site_id)
 
-        self._callbacks_hotword: typing.List[
-            typing.Callable[[HotwordDetected], None]
-        ] = []
+        self._callbacks_hotword: List[Callable[[HotwordDetected], Awaitable[None]]] = []
 
-        self._callbacks_intent: typing.Dict[
+        self._callbacks_intent: Dict[
             str,
-            typing.List[
-                typing.Callable[[NluIntent], typing.Union[ContinueSession, EndSession]]
-            ],
+            List[Callable[[NluIntent], Awaitable[None]]],
         ] = {}
 
-        self._callbacks_intent_not_recognized: typing.List[
-            typing.Callable[
-                [NluIntentNotRecognized], typing.Union[ContinueSession, EndSession]
-            ]
+        self._callbacks_intent_not_recognized: List[
+            Callable[[NluIntentNotRecognized], Awaitable[None]]
         ] = []
 
-        self._callbacks_topic: typing.Dict[
-            str, typing.List[typing.Callable[[TopicData, bytes], None]]
+        self._callbacks_dialogue_intent_not_recognized: List[
+            Callable[[DialogueIntentNotRecognized], Awaitable[None]]
+        ] = []
+
+        self._callbacks_topic: Dict[
+            str, List[Callable[[TopicData, bytes], Awaitable[None]]]
         ] = {}
 
-        self._callbacks_topic_regex: typing.List[
-            typing.Callable[[TopicData, bytes], None]
+        self._callbacks_topic_regex: List[
+            Callable[[TopicData, bytes], Awaitable[None]]
         ] = []
 
-        self._additional_topic: typing.List[str] = []
+        self._additional_topic: List[str] = []
 
-    def _subscribe_callbacks(self):
+    def _subscribe_callbacks(self) -> None:
         # Remove duplicate intent names
-        intent_names = list(set(self._callbacks_intent.keys()))
-        topics = [
+        intent_names: List[str] = list(set(self._callbacks_intent.keys()))
+        topics: List[str] = [
             NluIntent.topic(intent_name=intent_name) for intent_name in intent_names
         ]
 
@@ -104,7 +172,10 @@ class HermesApp(HermesClient):
         if self._callbacks_intent_not_recognized:
             topics.append(NluIntentNotRecognized.topic())
 
-        topic_names = list(set(self._callbacks_topic.keys()))
+        if self._callbacks_dialogue_intent_not_recognized:
+            topics.append(DialogueIntentNotRecognized.topic())
+
+        topic_names: List[str] = list(set(self._callbacks_topic.keys()))
         topics.extend(topic_names)
         topics.extend(self._additional_topic)
 
@@ -113,10 +184,10 @@ class HermesApp(HermesClient):
     async def on_raw_message(self, topic: str, payload: bytes):
         """This method handles messages from the MQTT broker.
 
-        Args:
-            topic (str): The topic of the received MQTT message.
+        Arguments:
+            topic: The topic of the received MQTT message.
 
-            payload (bytes): The payload of the received MQTT message.
+            payload: The payload of the received MQTT message.
 
         .. warning:: Don't override this method in your app. This is where all the magic happens in Rhasspy Hermes App.
         """
@@ -126,7 +197,7 @@ class HermesApp(HermesClient):
                 try:
                     hotword_detected = HotwordDetected.from_json(payload)
                     for function_h in self._callbacks_hotword:
-                        function_h(hotword_detected)
+                        await function_h(hotword_detected)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -138,7 +209,7 @@ class HermesApp(HermesClient):
                     intent_name = nlu_intent.intent.intent_name
                     if intent_name in self._callbacks_intent:
                         for function_i in self._callbacks_intent[intent_name]:
-                            function_i(nlu_intent)
+                            await function_i(nlu_intent)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -150,7 +221,19 @@ class HermesApp(HermesClient):
                         payload
                     )
                     for function_inr in self._callbacks_intent_not_recognized:
-                        function_inr(nlu_intent_not_recognized)
+                        await function_inr(nlu_intent_not_recognized)
+                except KeyError as key:
+                    _LOGGER.error(
+                        "Missing key %s in JSON payload for %s: %s", key, topic, payload
+                    )
+            elif DialogueIntentNotRecognized.is_topic(topic):
+                # hermes/dialogueManager/intentNotRecognized
+                try:
+                    dialogue_intent_not_recognized = (
+                        DialogueIntentNotRecognized.from_json(payload)
+                    )
+                    for function_dinr in self._callbacks_dialogue_intent_not_recognized:
+                        await function_dinr(dialogue_intent_not_recognized)
                 except KeyError as key:
                     _LOGGER.error(
                         "Missing key %s in JSON payload for %s: %s", key, topic, payload
@@ -159,7 +242,7 @@ class HermesApp(HermesClient):
                 unexpected_topic = True
                 if topic in self._callbacks_topic:
                     for function_1 in self._callbacks_topic[topic]:
-                        function_1(TopicData(topic, {}), payload)
+                        await function_1(TopicData(topic, {}), payload)
                         unexpected_topic = False
                 else:
                     for function_2 in self._callbacks_topic_regex:
@@ -182,54 +265,76 @@ class HermesApp(HermesClient):
         except Exception:
             _LOGGER.exception("on_raw_message")
 
-    def on_hotword(self, function):
+    def on_hotword(
+        self, function: Callable[[HotwordDetected], Awaitable[None]]
+    ) -> Callable[[HotwordDetected], Awaitable[None]]:
         """Apply this decorator to a function that you want to act on a detected hotword.
 
-        The function needs to have the following signature:
-
-        function(hotword: :class:`rhasspyhermes.wake.HotwordDetected`)
+        The decorated function has a :class:`rhasspyhermes.wake.HotwordDetected` object as an argument
+        and doesn't have a return value.
 
         Example:
 
         .. code-block:: python
 
             @app.on_hotword
-            def wake(hotword):
+            async def wake(hotword: HotwordDetected):
                 print(f"Hotword {hotword.model_id} detected on site {hotword.site_id}")
+
+        If a hotword has been detected, the ``wake`` function is called with the ``hotword`` argument.
+        This object holds information about the detected hotword.
         """
 
         self._callbacks_hotword.append(function)
 
         return function
 
-    def on_intent(self, *intent_names: str):
+    def on_intent(
+        self, *intent_names: str
+    ) -> Callable[
+        [
+            Callable[
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
+            ]
+        ],
+        Callable[[NluIntent], Awaitable[None]],
+    ]:
         """Apply this decorator to a function that you want to act on a received intent.
 
-        Args:
-            *intent_names (str): Names of the intents you want the function to act on.
+        Arguments:
+            intent_names: Names of the intents you want the function to act on.
 
-        The function needs to have the following signature:
+        The decorated function has a :class:`rhasspyhermes.nlu.NluIntent` object as an argument
+        and needs to return a :class:`ContinueSession` or :class:`EndSession` object.
 
-        function(intent: :class:`rhasspyhermes.nlu.NluIntent`)
+        If the function returns a :class:`ContinueSession` object, the intent's session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the intent's session
+        is ended after saying the supplied text, or immediately when no text is supplied.
 
         Example:
 
         .. code-block:: python
 
             @app.on_intent("GetTime")
-            def get_time(intent: NluIntent):
+            async def get_time(intent: NluIntent):
                 return EndSession("It's too late.")
+
+        If the intent with name GetTime has been detected, the ``get_time`` function is called
+        with the ``intent`` argument. This object holds information about the detected intent.
         """
 
-        def wrapper(function):
-            def wrapped(intent: NluIntent):
-                message = function(intent)
+        def wrapper(
+            function: Callable[
+                [NluIntent], Union[Awaitable[ContinueSession], Awaitable[EndSession]]
+            ]
+        ) -> Callable[[NluIntent], Awaitable[None]]:
+            async def wrapped(intent: NluIntent) -> None:
+                message = await function(intent)
                 if isinstance(message, EndSession):
                     if intent.session_id is not None:
                         self.publish(
                             DialogueEndSession(
                                 session_id=intent.session_id,
-                                site_id=intent.site_id,
                                 text=message.text,
                                 custom_data=message.custom_data,
                             )
@@ -243,7 +348,6 @@ class HermesApp(HermesClient):
                         self.publish(
                             DialogueContinueSession(
                                 session_id=intent.session_id,
-                                site_id=intent.site_id,
                                 text=message.text,
                                 intent_filter=message.intent_filter,
                                 custom_data=message.custom_data,
@@ -265,89 +369,162 @@ class HermesApp(HermesClient):
 
         return wrapper
 
-    def on_intent_not_recognized(self):
+    def on_intent_not_recognized(
+        self,
+        function: Callable[
+            [NluIntentNotRecognized],
+            Union[Awaitable[ContinueSession], Awaitable[EndSession], Awaitable[None]],
+        ],
+    ) -> Callable[[NluIntentNotRecognized], Awaitable[None]]:
         """Apply this decorator to a function that you want to act when the NLU system
         hasn't recognized an intent.
 
-        The function needs to have the following signature:
+        The decorated function has a :class:`rhasspyhermes.nlu.NluIntentNotRecognized` object as an argument
+        and can return a :class:`ContinueSession` or :class:`EndSession` object or have no return value.
 
-        function(intent_not_recognized: :class:`rhasspyhermes.nlu.IntentNotRecognized`)
+        If the function returns a :class:`ContinueSession` object, the current session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the current session
+        is ended after saying the supplied text, or immediately when no text is supplied. If the function doesn't
+        have a return value, nothing is changed to the session.
 
         Example:
 
         .. code-block:: python
 
             @app.on_intent_not_recognized
-            def notunderstood(intent_not_recognized):
+            async def not_understood(intent_not_recognized: NluIntentNotRecognized):
                 print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
+
+        If an intent hasn't been recognized, the ``not_understood`` function is called
+        with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
         """
 
-        def wrapper(function):
-            def wrapped(inr: NluIntentNotRecognized):
-                message = function(inr)
-                if isinstance(message, EndSession):
-                    if inr.session_id is not None:
-                        self.publish(
-                            DialogueEndSession(
-                                session_id=inr.session_id,
-                                site_id=inr.site_id,
-                                text=message.text,
-                                custom_data=message.custom_data,
-                            )
+        async def wrapped(inr: NluIntentNotRecognized) -> None:
+            message = await function(inr)
+            if isinstance(message, EndSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueEndSession(
+                            session_id=inr.session_id,
+                            text=message.text,
+                            custom_data=message.custom_data,
                         )
-                    else:
-                        _LOGGER.error(
-                            "Cannot end session of intent not recognized message without session ID."
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot end session of NLU intent not recognized message without session ID."
+                    )
+            elif isinstance(message, ContinueSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueContinueSession(
+                            session_id=inr.session_id,
+                            text=message.text,
+                            intent_filter=message.intent_filter,
+                            custom_data=message.custom_data,
+                            send_intent_not_recognized=message.send_intent_not_recognized,
                         )
-                elif isinstance(message, ContinueSession):
-                    if inr.session_id is not None:
-                        self.publish(
-                            DialogueContinueSession(
-                                session_id=inr.session_id,
-                                site_id=inr.site_id,
-                                text=message.text,
-                                intent_filter=message.intent_filter,
-                                custom_data=message.custom_data,
-                                send_intent_not_recognized=message.send_intent_not_recognized,
-                            )
-                        )
-                    else:
-                        _LOGGER.error(
-                            "Cannot continue session of intent not recognized message without session ID."
-                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot continue session of NLU intent not recognized message without session ID."
+                    )
 
-            self._callbacks_intent_not_recognized.append(wrapped)
+        self._callbacks_intent_not_recognized.append(wrapped)
 
-            return wrapped
+        return wrapped
 
-        return wrapper
+    def on_dialogue_intent_not_recognized(
+        self,
+        function: Callable[
+            [DialogueIntentNotRecognized],
+            Union[Awaitable[ContinueSession], Awaitable[EndSession], Awaitable[None]],
+        ],
+    ) -> Callable[[DialogueIntentNotRecognized], Awaitable[None]]:
+        """Apply this decorator to a function that you want to act when the dialogue manager
+        failed to recognize an intent and you requested to notify you of this event with the
+        `sendIntentNotRecognized` flag.
+
+        The decorated function has a :class:`rhasspyhermes.dialogue.DialogueIntentNotRecognized` object as an argument
+        and can return a :class:`ContinueSession` or :class:`EndSession` object or have no return value.
+
+        If the function returns a :class:`ContinueSession` object, the current session is continued after
+        saying the supplied text. If the function returns a a :class:`EndSession` object, the current session
+        is ended after saying the supplied text, or immediately when no text is supplied. If the function doesn't
+        have a return value, nothing is changed to the session.
+
+        Example:
+
+        .. code-block:: python
+
+            @app.on_dialogue_intent_not_recognized
+            async def not_understood(intent_not_recognized: DialogueIntentNotRecognized):
+                print(f"Didn't understand \"{intent_not_recognized.input}\" on site {intent_not_recognized.site_id}")
+
+        If an intent hasn't been recognized, the ``not_understood`` function is called
+        with the ``intent_not_recognized`` argument. This object holds information about the not recognized intent.
+        """
+
+        async def wrapped(inr: DialogueIntentNotRecognized) -> None:
+            message = await function(inr)
+            if isinstance(message, EndSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueEndSession(
+                            session_id=inr.session_id,
+                            text=message.text,
+                            custom_data=message.custom_data,
+                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot end session of dialogue intent not recognized message without session ID."
+                    )
+            elif isinstance(message, ContinueSession):
+                if inr.session_id is not None:
+                    self.publish(
+                        DialogueContinueSession(
+                            session_id=inr.session_id,
+                            text=message.text,
+                            intent_filter=message.intent_filter,
+                            custom_data=message.custom_data,
+                            send_intent_not_recognized=message.send_intent_not_recognized,
+                        )
+                    )
+                else:
+                    _LOGGER.error(
+                        "Cannot continue session of dialogue intent not recognized message without session ID."
+                    )
+
+        self._callbacks_dialogue_intent_not_recognized.append(wrapped)
+
+        return wrapped
 
     def on_topic(self, *topic_names: str):
         """Apply this decorator to a function that you want to act on a received raw MQTT message.
 
-        Args:
-            *topic_names (str): The MQTT topics you want the function to act on.
+        Arguments:
+            topic_names: The MQTT topics you want the function to act on.
 
-        The function needs to have the following signature:
-
-        function(data: :class:`TopicData`, payload: bytes)
+        The decorated function has a :class:`TopicData` and a :class:`bytes` object as its arguments.
+        The former holds data about the topic and the latter about the payload of the MQTT message.
 
         Example:
 
         .. code-block:: python
 
             @app.on_topic("hermes/+/{site_id}/playBytes/#")
-            def test_topic1(data: TopicData, payload: bytes):
+            async def test_topic1(data: TopicData, payload: bytes):
                 _LOGGER.debug("topic: %s, site_id: %s", data.topic, data.data.get("site_id"))
 
         .. note:: The topic names can contain MQTT wildcards (`+` and `#`) or templates (`{foobar}`).
-            In the latter case the value of the named template is available in the decorated function
-            as part of the ``data`` argument.
+            In the latter case, the value of the named template is available in the decorated function
+            as part of the :class:`TopicData` argument.
         """
 
         def wrapper(function):
-            def wrapped(data: TopicData, payload: bytes):
-                function(data, payload)
+            async def wrapped(data: TopicData, payload: bytes):
+                await function(data, payload)
 
             replaced_topic_names = []
 
@@ -428,6 +605,7 @@ class HermesApp(HermesClient):
         self._subscribe_callbacks()
 
         # Try to connect
+        # pylint: disable=no-member
         _LOGGER.debug("Connecting to %s:%s", self.args.host, self.args.port)
         hermes_cli.connect(self.mqtt_client, self.args)
         self.mqtt_client.loop_start()
@@ -440,49 +618,14 @@ class HermesApp(HermesClient):
         finally:
             self.mqtt_client.loop_stop()
 
+    def notify(self, text: str, site_id: str = "default"):
+        """Send a dialogue notification.
 
-@dataclass
-class ContinueSession:
-    """Helper class to continue the current session.
+        Use this to inform the user of something without expecting a response.
 
-    Attributes:
-        text (str, optional): The text the TTS should say to start this additional request of the session.
-        intent_filter (List[str], optional): A list of intents names to restrict the NLU resolution on the
-            answer of this query.
-        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
-            will stay the same.
-        send_intent_not_recognized (bool): Indicates whether the dialogue manager should handle non recognized
-            intents by itself or send them for the client to handle.
-    """
-
-    custom_data: typing.Optional[str] = None
-    text: typing.Optional[str] = None
-    intent_filter: typing.Optional[typing.List[str]] = None
-    send_intent_not_recognized: bool = False
-
-
-@dataclass
-class EndSession:
-    """Helper class to end the current session.
-
-    Attributes:
-        text (str, optional): The text the TTS should say to end the session.
-        custom_data (str, optional): An update to the session's custom data. If not provided, the custom data
-            will stay the same.
-    """
-
-    text: typing.Optional[str] = None
-    custom_data: typing.Optional[str] = None
-
-
-@dataclass
-class TopicData:
-    """Helper class for topic subscription.
-
-    Attributes:
-        topic (str): The MQTT topic.
-        data (Dict[str, str]): A dictionary holding extracted data for the given placeholder.
-    """
-
-    topic: str
-    data: typing.Dict[str, str]
+        Arguments:
+            text: The text to say.
+            site_id: The ID of the site where the text should be said.
+        """
+        notification = DialogueNotification(text)
+        self.publish(DialogueStartSession(init=notification, site_id=site_id))

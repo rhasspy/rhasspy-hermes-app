@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath(".."))
 
 project = "Rhasspy Hermes App"
 # pylint: disable=redefined-builtin
-copyright = "2020, Koen Vervloesem"
+copyright = "2020-2021, Koen Vervloesem"
 author = "Koen Vervloesem"
 
 
@@ -32,11 +32,12 @@ author = "Koen Vervloesem"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
-    "sphinx.ext.githubpages",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx_rtd_theme",
+    "sphinxcontrib.programoutput",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -47,13 +48,22 @@ extensions = [
 # This pattern also affects html_static_path and html_extra_path.
 # exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# Build list of references to ignore when running in nit-picky mode (-n option).
+nitpick_ignore = []
+
+for line in open("nitpick-exceptions"):
+    if line.strip() == "" or line.startswith("#"):
+        continue
+    dtype, target = line.split(maxsplit=1)
+    target = target.strip()
+    nitpick_ignore.append((dtype, target))
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -64,7 +74,10 @@ html_theme = "alabaster"
 
 # -- Options for intersphinx extension ---------------------------------------
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "rhasspyhermes": ("https://rhasspy-hermes.readthedocs.io/en/latest/", None),
+}
 
 # -- Options for todo extension ----------------------------------------------
 
@@ -75,6 +88,12 @@ todo_include_todos = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
+napoleon_use_param = True
 
 # -- Options for autodoc extension -------------------------------------------
 autodoc_default_options = {"show-inheritance": True}
+
+# -- Options for programoutput extension -------------------------------------
+# This is a temporary hack
+# See https://github.com/NextThought/sphinxcontrib-programoutput/issues/37)
+programoutput_prompt_template = "$ python3 examples/time_app.py --help\n{output}"
