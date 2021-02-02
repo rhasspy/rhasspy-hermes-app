@@ -256,7 +256,7 @@ class HermesApp(HermesClient):
                                         for name, position in named_positions.items():
                                             data.data[name] = parts[position]
 
-                                    function_2(data, payload)
+                                    await function_2(data, payload)
                                     unexpected_topic = False
 
                 if unexpected_topic:
