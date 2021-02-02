@@ -39,6 +39,8 @@ Removed
 Fixed
 =====
 
+- Added missing ``await`` in :meth:`rhasspyhermes_app.HermesApp.on_raw_message`. Pull request `#89 <https://github.com/rhasspy/rhasspy-hermes-app/pull/89>`_ by `@H3adcra5h <https://github.com/H3adcra5h>`_.
+
 Security
 ========
 
