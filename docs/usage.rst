@@ -35,6 +35,23 @@ You can pass all the settings as keyword arguments inside the constructor as wel
 ``rhasspyhermes_app.HermesApp("ExampleApp", host="192.168.178.123", port=12183)``. Note that arguments passed on the
 command line have precedence over arguments passed to the constructor.
 
+*********************
+Connecting to Rhasspy
+*********************
+
+In its default configuration, Rhasspy's internal MQTT broker listens on port 12183, so this is what you need to connect to.
+
+If you are using docker, you will need to add to add this port to your `docker-compose.yml` file:
+
+.. code-block::
+
+  services:
+    rhasspy:
+      ports:
+        - "12101:12101"   # this is the port used for the web interface
+        - "12183:12183"   # you need this to access Rhasspy's MQTT port
+
+
 *******
 Asyncio
 *******
