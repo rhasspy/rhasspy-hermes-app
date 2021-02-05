@@ -39,7 +39,7 @@ command line have precedence over arguments passed to the constructor.
 Connecting to Rhasspy
 *********************
 
-In its default configuration, Rhasspy's internal MQTT broker listens on port 12183, so this is what you need to connect to.
+In its default configuration, Rhasspy's internal MQTT broker listens on port 12183, so this is what you need to connect to, using command-line or constructor arguments - see previous section for details.
 
 If you are using docker, you will need to add to add this port to your `docker-compose.yml` file:
 
@@ -50,6 +50,8 @@ If you are using docker, you will need to add to add this port to your `docker-c
       ports:
         - "12101:12101"   # this is the port used for the web interface
         - "12183:12183"   # you need this to access Rhasspy's MQTT port
+
+If you're using an external MQTT broker, you probably want port 1883.  This is what most MQTT brokers use, and is Rhasspy Hermes App's default port.
 
 
 *******
