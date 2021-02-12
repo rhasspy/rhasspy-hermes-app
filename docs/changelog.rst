@@ -30,6 +30,8 @@ Added
 Changed
 =======
 
+- Updated dependency to rhasspy-hermes 0.6.0.
+
 Deprecated
 ==========
 
