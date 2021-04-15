@@ -7,12 +7,12 @@ from rhasspyhermes_app import HermesApp
 
 _LOGGER = logging.getLogger("TimeNotificationApp")
 SECONDS = 60
-
+SITE_ID = "default"
 
 def tell_time():
     """Tell the time with a notification."""
     now = datetime.now().strftime("%H %M")
-    app.notify(f"It's {now}", "laptop")
+    app.notify(f"It's {now}", SITE_ID)
     threading.Timer(SECONDS, tell_time).start()
 
 
