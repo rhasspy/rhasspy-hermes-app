@@ -41,7 +41,7 @@ Connecting to Rhasspy
 
 In its default configuration, Rhasspy's internal MQTT broker listens on port 12183, so this is what you need to connect to, using command-line or constructor arguments - see previous section for details.
 
-If you are using docker, you will need to add to add this port to your `docker-compose.yml` file:
+If you are using docker, you will need to add to add this port to your ``docker-compose.yml`` file:
 
 .. code-block::
 
@@ -53,6 +53,21 @@ If you are using docker, you will need to add to add this port to your `docker-c
 
 If you're using an external MQTT broker, you probably want port 1883.  This is what most MQTT brokers use, and is Rhasspy Hermes App's default port.
 
+********************
+Continuing a session
+********************
+
+An intent handler doesn't have to end a session. You can continue the session to ask the user for extra information or just for a confirmation. For example:
+
+.. literalinclude:: ../examples/continue_session.py
+
+The functions ``turn_off_light`` and ``turn_on_light`` triggered by the intents ``TurnOffLight`` and ``TurnOnLight``, respectively, each continue the current session by asking for confirmation. They set the ``custom_data`` argument to the name of the intent. This way the handler for the intent ``Yes`` can check whether the user confirmed the intent ``TurnOffLight`` or ``TurnOnLight``: the value of ``custom_data`` gets passed during a session. If the function ``yes`` sees that ``custom_data`` has another value, this means that the user has triggered the intent ``Yes`` without being in a session for ``TurnOffLight`` or ``TurnOnLight``.
+
+Instead of ending the session with a message depending on ``custom_data``, you can use the same approach in home automation applications, for instance for asking for confirmation before opening or closing a relay.
+
+Try the example app `continue_session.py`_.
+
+.. _`continue_session.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/continue_session.py
 
 *******
 Asyncio
