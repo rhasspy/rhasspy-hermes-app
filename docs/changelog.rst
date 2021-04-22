@@ -22,15 +22,13 @@ Unreleased
 
 Commits `since last release`_:
 
-.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.1.1...HEAD
+.. _`since last release`: https://github.com/rhasspy/rhasspy-hermes-app/compare/v1.1.2...HEAD
 
 Added
 =====
 
 Changed
 =======
-
-- Updated dependency to rhasspy-hermes 0.6.0.
 
 Deprecated
 ==========
@@ -41,10 +39,31 @@ Removed
 Fixed
 =====
 
-- Added missing ``await`` in :meth:`rhasspyhermes_app.HermesApp.on_raw_message`. Pull request `#89 <https://github.com/rhasspy/rhasspy-hermes-app/pull/89>`_ by `@H3adcra5h <https://github.com/H3adcra5h>`_.
-
 Security
 ========
+
+*********************
+`1.1.2`_ - 2021-04-22
+*********************
+
+.. _`1.1.2`: https://github.com/rhasspy/rhasspy-hermes-app/releases/tag/v1.1.2
+
+Added
+=====
+
+- Clarified `documentation about the default MQTT port <https://rhasspy-hermes-app.readthedocs.io/en/latest/usage.html#connecting-to-rhasspy>`_. Pull request `#90 <https://github.com/rhasspy/rhasspy-hermes-app/pull/90>`_ by `@jasonhildebrand <https://github.com/jasonhildebrand>`_.
+- Added and explained `example app to continue a session <https://rhasspy-hermes-app.readthedocs.io/en/latest/usage.html#continuing-a-session>`_.
+- Added and explained `example app for notifications <https://rhasspy-hermes-app.readthedocs.io/en/latest/usage.html#notifying-the-user>`_.
+
+Changed
+=======
+
+- Updated dependency to rhasspy-hermes 0.6.1.
+
+Fixed
+=====
+
+- Added missing ``await`` in :meth:`rhasspyhermes_app.HermesApp.on_raw_message`. Pull request `#89 <https://github.com/rhasspy/rhasspy-hermes-app/pull/89>`_ by `@H3adcra5h <https://github.com/H3adcra5h>`_.
 
 *********************
 `1.1.1`_ - 2021-01-13
