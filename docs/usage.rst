@@ -69,6 +69,20 @@ Try the example app `continue_session.py`_.
 
 .. _`continue_session.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/continue_session.py
 
+******************
+Notifying the user
+******************
+
+Your app's voice actions aren't limited to replying in a session. At any time, your app can inform the user of something without expecting a response. An example:
+
+.. literalinclude:: ../examples/time_app_notification.py
+
+This example starts a timer that notifies the user every minute with the current time. This is done using the :meth:`rhasspyhermes_app.HermesApp.notify` method, which accepts a message and a site ID.
+
+Try the example app `time_app_notification.py`_.
+
+.. _`time_app_notification.py`: https://github.com/rhasspy/rhasspy-hermes-app/blob/master/examples/time_app_notification.py
+
 *******
 Asyncio
 *******
