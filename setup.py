@@ -7,7 +7,9 @@ this_dir = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_dir, "README.rst"), "r", encoding="utf-8") as readme_file:
     long_description = readme_file.read()
 
-with open(os.path.join(this_dir, "requirements.txt"), "r", encoding="utf-8") as requirements_file:
+with open(
+    os.path.join(this_dir, "requirements.txt"), "r", encoding="utf-8"
+) as requirements_file:
     requirements = requirements_file.read().splitlines()
 
 with open(os.path.join(this_dir, "VERSION"), "r", encoding="utf-8") as version_file:
