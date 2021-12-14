@@ -6,7 +6,7 @@ lxml==4.6.5
 mypy==0.812
 pylint==2.12.2
 pytest==6.2.5
-pytest-asyncio==0.15.1
+pytest-asyncio==0.16.0
 pytest-cov==2.11.1
 pytest-mock==3.6.1
 pytest-sugar==0.9.4
