@@ -7,7 +7,7 @@ mypy==0.812
 pylint==2.12.2
 pytest==6.2.5
 pytest-asyncio==0.16.0
-pytest-cov==2.11.1
+pytest-cov==3.0.0
 pytest-mock==3.6.1
 pytest-sugar==0.9.4
 rstcheck==3.3.1
