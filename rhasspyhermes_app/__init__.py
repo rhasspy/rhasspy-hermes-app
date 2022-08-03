@@ -563,7 +563,8 @@ class HermesApp(HermesClient):
                             if token == "#"
                             else "[^/]+$"
                             if token == "+"
-                            else token.replace("*", r"\*") + "$"  # not escaping * prevents the regex from matching
+                            else token.replace("*", r"\*")
+                            + "$"  # not escaping * prevents the regex from matching
                         )
 
                     return value
