@@ -3,7 +3,7 @@ black==22.6.0
 coverage==6.2
 flake8==4.0.1
 lxml==4.9.1
-mypy==0.930
+mypy==0.971
 pylint==2.12.2
 pytest==6.2.5
 pytest-asyncio==0.16.0
