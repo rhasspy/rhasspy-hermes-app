@@ -13,4 +13,4 @@ pytest-sugar==0.9.5
 rstcheck==6.1.0
 sphinx_rtd_theme==1.0.0
 sphinxcontrib-programoutput==0.17
-yamllint==1.27.1
+yamllint==1.28.0
