@@ -1,4 +1,4 @@
-Sphinx==5.2.2
+Sphinx==5.2.3
 black==22.8.0
 coverage==6.5.0
 flake8==5.0.4
