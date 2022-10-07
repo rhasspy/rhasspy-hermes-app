@@ -1,5 +1,5 @@
 Sphinx==5.2.3
-black==22.8.0
+black==22.10.0
 coverage==6.5.0
 flake8==5.0.4
 lxml==4.9.1
