@@ -10,7 +10,7 @@ pytest-asyncio==0.20.2
 pytest-cov==4.0.0
 pytest-mock==3.10.0
 pytest-sugar==0.9.6
-rstcheck==6.1.0
+rstcheck==6.1.1
 sphinx_rtd_theme==1.1.1
 sphinxcontrib-programoutput==0.17
 yamllint==1.28.0
