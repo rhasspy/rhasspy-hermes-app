@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.3.0
       - name: Install dependencies on macOS
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.3.0
       - name: Bump version and push tag
         uses: rhasspy/rhasspy-tag-action@master
         env:
